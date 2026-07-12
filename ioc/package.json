@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --mode dev",
-    "build": "vue-cli-service build"
+    "build:sit": "NODE_ENV=production vue-cli-service build --mode sit",
+    "build:uat": "NODE_ENV=production vue-cli-service build --mode uat",
+    "build": "NODE_ENV=production vue-cli-service build --mode pro"
   },
   "dependencies": {
     "core-js": "^3.8.3",

@@ -4,8 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build && node scripts/archive.mjs",
+    "serve": "vite --mode dev",
+    "dev": "vite --mode dev",
+    "build:sit": "vue-tsc -b && vite build --mode sit && node scripts/archive.mjs",
+    "build:uat": "vue-tsc -b && vite build --mode uat && node scripts/archive.mjs",
+    "build": "vue-tsc -b && vite build --mode pro && node scripts/archive.mjs",
     "preview": "vite preview",
     "type-check": "vue-tsc -b"
   },
