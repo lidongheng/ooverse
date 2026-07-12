@@ -1,4 +1,4 @@
-FROM nginx:1.31.2
+FROM nginx:latest
 
 COPY ooverse/ /usr/share/nginx/html/ooverse/
 
