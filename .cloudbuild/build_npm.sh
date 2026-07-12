@@ -25,22 +25,30 @@ echo "BUILD_SCRIPT: ${BUILD_SCRIPT}"
 echo "======== check build environment ========"
 node --version
 npm --version
-npx pnpm --version
 
-echo "======== pnpm install ========"
-npx pnpm install --frozen-lockfile
+echo "======== npm install cost-operation ========"
+npm install --prefix cost-operation
+
+echo "======== npm install digital-map-cost ========"
+npm install --prefix digital-map-cost
+
+echo "======== npm install ioc ========"
+npm install --prefix ioc
+
+echo "======== npm install operation-map ========"
+npm install --prefix operation-map
 
 echo "======== build cost-operation ========"
-npx pnpm --filter @ooverse/cost-operation run "${BUILD_SCRIPT}"
+npm --prefix cost-operation run "${BUILD_SCRIPT}"
 
 echo "======== build digital-map-cost ========"
-npx pnpm --filter @ooverse/digital-map-cost run "${BUILD_SCRIPT}"
+npm --prefix digital-map-cost run "${BUILD_SCRIPT}"
 
 echo "======== build ioc ========"
-npx pnpm --filter @ooverse/ioc run "${BUILD_SCRIPT}"
+npm --prefix ioc run "${BUILD_SCRIPT}"
 
 echo "======== build operation-map ========"
-npx pnpm --filter @ooverse/operation-map run "${BUILD_SCRIPT}"
+npm --prefix operation-map run "${BUILD_SCRIPT}"
 
 echo "======== prepare ooverse directory ========"
 # CI 工作区可能被复用，每次都删除上一轮整理的产物。

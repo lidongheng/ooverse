@@ -1,7 +1,4 @@
-rm /etc/nginx/sites-enabled/*
-cd /usr/share/nginx
+#!/bin/sh
+set -e
 
-chown -R www-data:www-data
-html/
-
-nginx -g "daemon off;"
+exec nginx -g 'daemon off;'
