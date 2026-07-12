@@ -1,6 +1,6 @@
-# operationMap
+# operation-map
 
-`operationMap` 是 `digitalMapCost` 迁移到 Vite + Vue 3.5 的目标项目。项目初始只提供干净的 Vite 运行壳，不直接搬运或修改 `digitalMapCost` 的业务代码。
+`operation-map` 是 `digital-map-cost` 迁移到 Vite + TypeScript 的重构项目。当前工程只提供迁移所需的基础能力，业务模块后续按功能逐步迁入。
 
 ## 常用命令
 
@@ -8,55 +8,47 @@
 
 ```bash
 pnpm install
-pnpm --filter @kooVerse-web/operation-map dev
-pnpm --filter @kooVerse-web/operation-map type-check
-pnpm --filter @kooVerse-web/operation-map build
-pnpm --filter @kooVerse-web/operation-map preview
+pnpm --filter @ooverse/operation-map dev
+pnpm --filter @ooverse/operation-map type-check
+pnpm --filter @ooverse/operation-map build
+pnpm --filter @ooverse/operation-map preview
 ```
 
-## 目录结构
+## 构建与部署
 
-```text
-operationMap
-├── index.html
-├── package.json
-├── README.md
-├── src
-│   ├── App.vue
-│   ├── main.ts
-│   ├── router
-│   │   └── index.ts
-│   ├── views
-│   │   └── HomeView.vue
-│   └── vite-env.d.ts
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-└── vite.config.ts
-```
+- 本地开发路径：`/`
+- 生产访问路径：`/ooverse/operation-map/`
+- 生产输出目录：`operation-map/dist/operation-map/`
+- 压缩包：`operation-map/dist/operation-map.zip`
+- 路由模式：Hash Router
 
-## 路径别名
+构建时会生成 gzip 文件，并将生产目录打包为 zip，供后续 Docker 镜像复制使用。
 
-- `@` 指向 `operationMap/src`
+## 工程能力
+
+- Vite 6 + Vue 3.5 + TypeScript 5.7
+- Element Plus 2.14.3 全局注册
+- `@` 指向 `operation-map/src`
 - `@shared` 指向仓库根目录的 `shared`
+- 生产资源使用时间戳文件名
+- Element Plus 与其他第三方依赖分包
+- 1920px 设计稿的 PostCSS `px` 转 `vw`
+- Vue production source map 关闭
 
-示例：
+## TS/JS 共存
 
-```ts
-import SvgIcon from '@shared/components/SvgIcon.vue';
-```
+迁移阶段允许 `.ts`、`.js`、`.vue` 文件共存：
 
-## TS/JS 兼容说明
+- `allowJs: true`：TypeScript 接受迁入的 JavaScript 文件。
+- `checkJs: false`：暂不对旧 JavaScript 做类型检查。
+- `src` 和根目录 `shared` 中的 TS、JS、Vue 文件都会参与解析。
 
-迁移阶段允许 `.ts`、`.js`、`.vue` 文件共存。`tsconfig.app.json` 中已开启 `allowJs`，并关闭 `checkJs`，避免旧 JS 代码迁移时被类型检查阻塞。
+新增框架代码优先使用 TypeScript；从 `digital-map-cost` 迁入的 JavaScript 可以先保持原样，再逐步重构。
 
-`operationMap/src/**/*.js` 和 `../shared/**/*.js` 已纳入 TypeScript 解析范围，方便迁移 `digitalMapCost` 现有 JS 文件和继续复用 `shared` 中的公共 JS。
+## Vue CLI 到 Vite 的迁移规则
 
-## 迁移注意事项
-
-`digitalMapCost` 中的 Vue CLI 或 webpack 专属写法不要直接照搬到 Vite 项目中，后续按模块迁移时再做最小改造：
-
-- `require.context` 改为 `import.meta.glob`
-- `process.env.VUE_APP_*` 改为 `import.meta.env.VITE_*`
-- webpack svg-sprite-loader 相关逻辑按实际模块依赖单独迁移
-- 旧 devServer 代理配置按接口使用情况迁移到 Vite server proxy
+- `process.env.VUE_APP_*` 改为 `import.meta.env.VITE_*`。
+- `require.context` 改为 `import.meta.glob`。
+- Webpack loader 或 plugin 不能直接复制到 Vite 配置。
+- Vue CLI 的 `publicPath` 对应 Vite 的 `base`。
+- Vue CLI 的 `outputDir` 对应 Vite 的 `build.outDir`。

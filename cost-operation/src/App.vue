@@ -1,26 +1,24 @@
 <template>
-  <router-view/>
+  <el-config-provider :locale="zhCn">
+    <router-view />
+  </el-config-provider>
 </template>
 
-<style lang="less">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+<script setup>
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+</script>
+
+<style lang="less" scoped>
+@import './styles/themes.less';
+
+:global(html),
+:global(body),
+:global(#app) {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
-    }
-  }
+:global(body) {
+  margin: 0;
 }
 </style>

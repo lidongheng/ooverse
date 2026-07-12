@@ -1,0 +1,46 @@
+{
+  "status": 200,
+  "message": "SUCCESS",
+  "messageEn": "SUCCESS",
+  "data": {
+    "pagelnfo": {
+      "totalNum": 2,
+      "pageNo": 1,
+      "pageSize": 50,
+      "records": [
+        {
+          "id": 21780,
+          "dataDate": "20260624",
+          "regionid": "cn-north-9",
+          "regionName": "华北-北京一",
+          "cluster": "cnnorth1-obs-lz12",
+          "storageMode": "单AZ",
+          "sellableCapacity": 207861.649488,
+          "totalSellableCapacity": 1434748.7604,
+          "soldCapacity": 833511.458,
+          "allocatedRate": 2.389406,
+          "targetWaterLine": 2.88,
+          "demandQuantity": -8354.0,
+          "regName": "华北",
+          "insideOutside": "国内"
+        }
+      ]
+    },
+    "summaryVo": {
+      "id": 21780,
+      "dataDate": "20260624",
+      "regionid": "cn-north-1",
+      "regionName": "华北-北京一",
+      "cluster": "cnnorth1-obs-Iz12",
+      "storageMode": "单AZ",
+      "sellableCapacity": 327718.960148,
+      "totalSellableCapacity": 2552495.4159,
+      "soldCapacity": 1513721.7393,
+      "allocatedRate": 4.246536,
+      "targetWaterLine": 5.04,
+      "demandQuantity": -3644.0,
+      "regName": "华北",
+      "insideOutside": "国内"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "message": "SUCCESS",
+  "messageEn": "SUCCESS",
+  "data": {
+    "trend": [
+      {
+        "id": null,
+        "regName": "华北",
+        "insideOutside": "国内",
+        "dataUuid": null,
+        "cloudTypeCode": null,
+        "regionId": "cn-north-1",
+        "regionName": "华北-北京一",
+        "azid": "cn-north-1",
+        "azName": "华北-北京一(AZ1)",
+        "clusterid": null,
+        "xpuType": "GPU",
+        "cardModel": "Vnt1",
+        "computePower": null,
+        "resourcePoolId": null,
+        "resourcePoolBaseld": null,
+        "poolStatus": null,
+        "totalXpu": 118824.75,
+        "sellablexpu": 115208.25,
+        "unsellableXpu": 3616.5,
+        "allocatedXpu": 96825.75,
+        "unallocatedXpu": 18382.5,
+        "soldXpu": 96825.75,
+        "tosellXpu": 0,
+        "stockFlag": null,
+        "activeFlag": null,
+        "dataYear": null,
+        "dataMonth": null,
+        "dataDate": "20260601",
+        "dataHour": null,
+        "dataTime": null,
+        "dataUpdateTime": null
+      }
+    ]
+  }
+}

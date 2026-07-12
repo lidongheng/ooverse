@@ -1,0 +1,15 @@
+{
+  "status": 200,
+  "message": "SUCCESS",
+  "messageEn": "SUCCESS",
+  "data": {
+    "totalUnallocatedXpu": "19083.25",
+    "a3Unallocated": "984",
+    "a2Unallocated": "328",
+    "a1Unallocated": "7680",
+    "totalUnallocatedXpuMom": "677.75",
+    "a3UnallocatedMom": "544",
+    "a2UnallocatedMom": "200",
+    "a1UnallocatedMom": "48"
+  }
+}

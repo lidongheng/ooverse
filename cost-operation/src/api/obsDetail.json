@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "message": "SUCCESS",
+  "messageEn": "SUCCESS",
+  "data": {
+    "totalSellableCapacity": "327718.960148",
+
+    "totalSellableCapacityBigDecimal": 327718.960148,
+    "azTotalSellableCapacity": "207861.649488",
+
+    "threeAzTotalSellableCapacity": "119857.31066",
+
+    "totalSellableCapacityMom": "68188.2915",
+
+    "azTotalSellableCapacityMom": "35057.93291",
+
+    "threeAzTotalSellableCapacityMom": "33130.35858",
+    "topTenList": [
+      {
+        "totalSellableCapacity": "327718.960148",
+
+        "totalSellableCapacityBigDecimal": 327718.960148,
+        "azTotalSellableCapacity": "207861.649488",
+
+        "threeAzTotalSellableCapacity": "119857.31066",
+
+        "totalSellableCapacityMom": null,
+
+        "azTotalSellableCapacityMom": null,
+
+        "threeAzTotalSellableCapacityMom": null,
+        "topTenList": null,
+        "regionName": "华北-乌兰察布一"
+      }
+    ],
+
+    "regionName": null
+  }
+}

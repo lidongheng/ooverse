@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "message": "SUCCESS",
+  "messageEn": "SUCCESS",
+  "data": {
+    "trend": [
+      {
+        "id": null,
+        "dataDate": "20260601",
+        "regionid": "cn-north-1",
+        "regionName": "华北-北京一",
+        "cluster": "cnnorth1-obs-lz11",
+        "storageMode": "单AZ",
+        "sellableCapacity": 260031.005332,
+        "totalSellableCapacity": 1887195.1931,
+        "soldCapacity": 1096763.5337,
+        "allocatedRate": 2.945408,
+        "targetWaterLine": 3.6,
+        "demandQuantity": 1986.0,
+        "regName": "华北",
+        "insideOutside": "国内"
+      }
+    ]
+  }
+}

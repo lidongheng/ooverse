@@ -1,0 +1,425 @@
+/**
+ * 主题样式文件
+ * 提供便捷的Less混合器和CSS类
+ */
+
+// ================================
+// 主题变量引用（通过CSS变量）
+// ================================
+
+// 基础颜色变量
+@theme-bg-primary: var(--theme-bg-primary);
+@theme-bg-secondary: var(--theme-bg-secondary);
+@theme-bg-tertiary: var(--theme-bg-tertiary);
+@theme-bg-hover: var(--theme-bg-hover);
+@theme-bg-active: var(--theme-bg-active);
+
+@theme-text-primary: var(--theme-text-primary);
+@theme-text-secondary: var(--theme-text-secondary);
+@theme-text-tertiary: var(--theme-text-tertiary);
+@theme-text-disabled: var(--theme-text-disabled);
+@theme-text-inverse: var(--theme-text-inverse);
+
+@theme-border-primary: var(--theme-border-primary);
+@theme-border-secondary: var(--theme-border-secondary);
+@theme-border-light: var(--theme-border-light);
+@theme-border-dark: var(--theme-border-dark);
+
+@theme-shadow-sm: var(--theme-shadow-sm);
+@theme-shadow: var(--theme-shadow);
+@theme-shadow-md: var(--theme-shadow-md);
+@theme-shadow-lg: var(--theme-shadow-lg);
+
+@theme-primary: var(--theme-primary);
+@theme-primary-light: var(--theme-primary-light);
+@theme-primary-dark: var(--theme-primary-dark);
+@theme-primary-bg: var(--theme-primary-bg);
+
+@theme-success: var(--theme-success);
+@theme-success-light: var(--theme-success-light);
+@theme-success-bg: var(--theme-success-bg);
+
+@theme-warning: var(--theme-warning);
+@theme-warning-light: var(--theme-warning-light);
+@theme-warning-bg: var(--theme-warning-bg);
+
+@theme-danger: var(--theme-danger);
+@theme-danger-light: var(--theme-danger-light);
+@theme-danger-bg: var(--theme-danger-bg);
+
+@theme-info: var(--theme-info);
+@theme-info-light: var(--theme-info-light);
+@theme-info-bg: var(--theme-info-bg);
+
+@theme-card-bg: var(--theme-card-bg);
+@theme-card-border: var(--theme-card-border);
+@theme-card-shadow: var(--theme-card-shadow);
+
+@theme-input-bg: var(--theme-input-bg);
+@theme-input-border: var(--theme-input-border);
+@theme-input-border-focus: var(--theme-input-border-focus);
+@theme-input-placeholder: var(--theme-input-placeholder);
+
+@theme-table-bg: var(--theme-table-bg);
+@theme-table-header-bg: var(--theme-table-header-bg);
+@theme-table-stripe-bg: var(--theme-table-stripe-bg);
+@theme-table-border: var(--theme-table-border);
+@theme-table-hover-bg: var(--theme-table-hover-bg);
+
+@theme-menu-bg: var(--theme-menu-bg);
+@theme-menu-hover-bg: var(--theme-menu-hover-bg);
+@theme-menu-active-bg: var(--theme-menu-active-bg);
+@theme-menu-text: var(--theme-menu-text);
+@theme-menu-text-active: var(--theme-menu-text-active);
+
+// ================================
+// 便捷的混合器(Mixins)
+// ================================
+
+// 主题卡片样式
+.theme-card() {
+  background-color: @theme-card-bg;
+  border: 1px solid @theme-card-border;
+  box-shadow: @theme-card-shadow;
+  color: @theme-text-primary;
+}
+
+// 主题输入框样式
+.theme-input() {
+  background-color: @theme-input-bg;
+  border: 1px solid @theme-input-border;
+  color: @theme-text-primary;
+  
+  &:focus {
+    border-color: @theme-input-border-focus;
+  }
+  
+  &::placeholder {
+    color: @theme-input-placeholder;
+  }
+}
+
+// 主题按钮样式
+.theme-button(@type: default) when (@type = default) {
+  background-color: @theme-bg-secondary;
+  border: 1px solid @theme-border-primary;
+  color: @theme-text-primary;
+  
+  &:hover {
+    background-color: @theme-bg-hover;
+  }
+  
+  &:active {
+    background-color: @theme-bg-active;
+  }
+}
+
+.theme-button(@type: primary) when (@type = primary) {
+  background-color: @theme-primary;
+  border: 1px solid @theme-primary;
+  color: @theme-text-inverse;
+  
+  &:hover {
+    background-color: @theme-primary-light;
+    border-color: @theme-primary-light;
+  }
+  
+  &:active {
+    background-color: @theme-primary-dark;
+    border-color: @theme-primary-dark;
+  }
+}
+
+.theme-button(@type: success) when (@type = success) {
+  background-color: @theme-success;
+  border: 1px solid @theme-success;
+  color: @theme-text-inverse;
+  
+  &:hover {
+    background-color: @theme-success-light;
+    border-color: @theme-success-light;
+  }
+}
+
+.theme-button(@type: warning) when (@type = warning) {
+  background-color: @theme-warning;
+  border: 1px solid @theme-warning;
+  color: @theme-text-inverse;
+  
+  &:hover {
+    background-color: @theme-warning-light;
+    border-color: @theme-warning-light;
+  }
+}
+
+.theme-button(@type: danger) when (@type = danger) {
+  background-color: @theme-danger;
+  border: 1px solid @theme-danger;
+  color: @theme-text-inverse;
+  
+  &:hover {
+    background-color: @theme-danger-light;
+    border-color: @theme-danger-light;
+  }
+}
+
+// 主题表格样式
+.theme-table() {
+  background-color: @theme-table-bg;
+  border: 1px solid @theme-table-border;
+  color: @theme-text-primary;
+  
+  th {
+    background-color: @theme-table-header-bg;
+    border-bottom: 1px solid @theme-table-border;
+  }
+  
+  td {
+    border-bottom: 1px solid @theme-table-border;
+  }
+  
+  tr:nth-child(even) {
+    background-color: @theme-table-stripe-bg;
+  }
+  
+  tr:hover {
+    background-color: @theme-table-hover-bg;
+  }
+}
+
+// 主题菜单样式
+.theme-menu() {
+  background-color: @theme-menu-bg;
+  color: @theme-menu-text;
+  
+  .menu-item {
+    color: @theme-menu-text;
+    
+    &:hover {
+      background-color: @theme-menu-hover-bg;
+    }
+    
+    &.active {
+      background-color: @theme-menu-active-bg;
+      color: @theme-menu-text-active;
+    }
+  }
+}
+
+// 主题阴影
+.theme-shadow(@level: default) when (@level = sm) {
+  box-shadow: @theme-shadow-sm;
+}
+
+.theme-shadow(@level: default) when (@level = default) {
+  box-shadow: @theme-shadow;
+}
+
+.theme-shadow(@level: md) when (@level = md) {
+  box-shadow: @theme-shadow-md;
+}
+
+.theme-shadow(@level: lg) when (@level = lg) {
+  box-shadow: @theme-shadow-lg;
+}
+
+// 主题过渡动画
+.theme-transition(@property: all, @duration: 0.3s) {
+  transition: @property @duration ease;
+}
+
+// ================================
+// 工具类
+// ================================
+
+// 基础布局类
+.theme-container {
+  background-color: @theme-bg-primary;
+  color: @theme-text-primary;
+  min-height: 100vh;
+}
+
+.theme-content {
+  background-color: @theme-bg-secondary;
+  padding: 20px;
+  border-radius: 8px;
+  .theme-shadow();
+}
+
+// 文字颜色类
+.text-primary {
+  color: @theme-text-primary !important;
+}
+
+.text-secondary {
+  color: @theme-text-secondary !important;
+}
+
+.text-tertiary {
+  color: @theme-text-tertiary !important;
+}
+
+.text-disabled {
+  color: @theme-text-disabled !important;
+}
+
+.text-inverse {
+  color: @theme-text-inverse !important;
+}
+
+// 背景颜色类
+.bg-primary {
+  background-color: @theme-bg-primary !important;
+}
+
+.bg-secondary {
+  background-color: @theme-bg-secondary !important;
+}
+
+.bg-tertiary {
+  background-color: @theme-bg-tertiary !important;
+}
+
+// 边框类
+.border-primary {
+  border-color: @theme-border-primary !important;
+}
+
+.border-secondary {
+  border-color: @theme-border-secondary !important;
+}
+
+// 状态颜色类
+.color-primary {
+  color: @theme-primary !important;
+}
+
+.color-success {
+  color: @theme-success !important;
+}
+
+.color-warning {
+  color: @theme-warning !important;
+}
+
+.color-danger {
+  color: @theme-danger !important;
+}
+
+.color-info {
+  color: @theme-info !important;
+}
+
+// 背景状态颜色类
+.bg-primary-color {
+  background-color: @theme-primary !important;
+  color: @theme-text-inverse !important;
+}
+
+.bg-success {
+  background-color: @theme-success-bg !important;
+  color: @theme-success !important;
+}
+
+.bg-warning {
+  background-color: @theme-warning-bg !important;
+  color: @theme-warning !important;
+}
+
+.bg-danger {
+  background-color: @theme-danger-bg !important;
+  color: @theme-danger !important;
+}
+
+.bg-info {
+  background-color: @theme-info-bg !important;
+  color: @theme-info !important;
+}
+
+// 阴影工具类
+.shadow-sm {
+  .theme-shadow(sm);
+}
+
+.shadow {
+  .theme-shadow();
+}
+
+.shadow-md {
+  .theme-shadow(md);
+}
+
+.shadow-lg {
+  .theme-shadow(lg);
+}
+
+// ================================
+// 主题切换动画
+// ================================
+
+* {
+  .theme-transition(background-color, 0.3s);
+  .theme-transition(color, 0.3s);
+  .theme-transition(border-color, 0.3s);
+  .theme-transition(box-shadow, 0.3s);
+}
+
+// ================================
+// 特殊主题适配
+// ================================
+
+// 暗黑主题特殊处理
+[data-theme="dark"] {
+  // 滚动条样式
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--theme-bg-secondary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--theme-border-dark);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--theme-text-tertiary);
+    }
+  }
+  
+  // 选中文本颜色
+  ::selection {
+    background: var(--theme-primary);
+    color: var(--theme-text-inverse);
+  }
+}
+
+// 亮色主题特殊处理
+[data-theme="light"] {
+  // 滚动条样式
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--theme-bg-secondary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--theme-border-primary);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--theme-border-dark);
+    }
+  }
+  
+  // 选中文本颜色
+  ::selection {
+    background: var(--theme-primary-bg);
+    color: var(--theme-primary);
+  }
+} 
