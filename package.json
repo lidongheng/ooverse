@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "echarts": "6.0.0",
-    "vue": "3.5.0"
+    "vue": "3.5.0",
+    "element-plus": "2.14.3"
   }
 }

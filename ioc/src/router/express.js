@@ -4,17 +4,17 @@ import EntryExampleView from '@/views/examples/EntryExampleView.vue'
 const routes = [
   {
     path: '/',
-    name: 'index-example',
+    name: 'express-example',
     component: EntryExampleView,
     props: {
-      title: 'IOC 默认入口示例',
-      description: '这是 index.html 对应的独立入口。',
-      entryFile: 'index.html'
+      title: 'IOC Express 入口示例',
+      description: '这是 express.html 对应的独立入口。',
+      entryFile: 'express.html'
     }
   },
   {
     path: '/detail',
-    name: 'index-detail-example',
+    name: 'express-detail-example',
     component: () => import('@/views/examples/RouteDetailExampleView.vue')
   }
 ]

@@ -1,23 +1,29 @@
 {
-  "name": "ioc",
+  "name": "@ooverse/ioc",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "vue-cli-service serve --mode dev",
     "build": "vue-cli-service build"
   },
   "dependencies": {
     "core-js": "^3.8.3",
     "vue": "3.5.0",
     "vue-router": "4.6.4",
-    "echarts": "6.0.0"
+    "echarts": "6.0.0",
+    "element-plus": "2.14.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "compression-webpack-plugin": "^10.0.0",
+    "css-minimizer-webpack-plugin": "^5.0.1",
+    "filemanager-webpack-plugin": "^2.0.5",
     "less": "^4.0.0",
-    "less-loader": "^8.0.0"
+    "less-loader": "^8.0.0",
+    "postcss-pxtorem": "^6.1.0",
+    "terser-webpack-plugin": "^5.3.9"
   },
   "browserslist": [
     "> 1%",

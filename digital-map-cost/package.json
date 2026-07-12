@@ -1,23 +1,30 @@
 {
-  "name": "digital-map-cost",
+  "name": "@ooverse/digital-map-cost",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "serve": "vue-cli-service serve --mode dev",
+    "build:sit": "vue-cli-service build --mode sit",
+    "build:uat": "vue-cli-service build --mode uat",
+    "build": "vue-cli-service build --mode pro"
   },
   "dependencies": {
     "core-js": "^3.8.3",
     "vue": "3.5.0",
     "vue-router": "4.6.4",
-    "echarts": "6.0.0"
+    "echarts": "6.0.0",
+    "element-plus": "2.14.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "compression-webpack-plugin": "10.0.0",
+    "filemanager-webpack-plugin": "2.0.5",
     "less": "^4.0.0",
-    "less-loader": "^8.0.0"
+    "less-loader": "^8.0.0",
+    "postcss": "8.4.41",
+    "postcss-px-to-viewport": "^1.1.1"
   },
   "browserslist": [
     "> 1%",
