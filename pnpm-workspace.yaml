@@ -1,0 +1,6 @@
+packages:
+  - packages/**
+  - digital-map-cost
+  - ioc
+  - operation-map
+  - cost-operation
