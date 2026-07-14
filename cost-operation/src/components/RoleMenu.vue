@@ -14,6 +14,12 @@
       >
       <span class="role-avatar-name">{{ selectedRole.label }}</span>
     </button>
+    <RolePermissionGuide
+      v-if="selectedRole && roleGuidePageKey"
+      :key="roleGuidePageKey"
+      ref="rolePermissionGuideRef"
+      :page-key="roleGuidePageKey"
+    />
     <div v-if="showRoleCard" class="role-card-popover" @click.stop>
       <RolePermissionCard
         compact
@@ -25,8 +31,9 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from 'vue-router';
 import RolePermissionCard from "@/components/RolePermissionCard.vue";
+import RolePermissionGuide from '@/components/RolePermissionGuide.vue';
 import { getPermissionConfig } from "@/api/role";
 import {
   canEnterRolePage,
@@ -41,15 +48,30 @@ import {
   syncSelectedRoleFromSession,
 } from "@/config/role";
 
+const ROLE_GUIDE_PAGE_KEY_MAP = {
+  home: 'costOperation',
+  saleHome: 'saleHome',
+};
+
+const route = useRoute();
 const router = useRouter();
 const showRoleCard = ref(false);
 const roleMenuRef = ref(null);
+const rolePermissionGuideRef = ref(null);
+
+const roleGuidePageKey = computed(() => {
+  return ROLE_GUIDE_PAGE_KEY_MAP[route.name];
+});
 
 const selectedRole = computed(() => {
   return roles.find((role) => role.value === selectedRoleValue.value);
 });
 
 const toggleRoleCard = () => {
+  if (rolePermissionGuideRef.value) {
+    rolePermissionGuideRef.value.closeGuide();
+  }
+
   showRoleCard.value = !showRoleCard.value;
 };
 
@@ -124,6 +146,7 @@ onBeforeUnmount(() => {
 <style scoped lang="less">
 .role-card-entry {
   position: relative;
+  z-index: 200;
   flex-shrink: 0;
 }
 
