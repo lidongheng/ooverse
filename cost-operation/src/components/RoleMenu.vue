@@ -2,6 +2,7 @@
   <div ref="roleMenuRef" class="role-card-entry">
     <button
       v-if="selectedRole"
+      ref="roleAvatarButtonRef"
       class="role-avatar-button"
       type="button"
       aria-label="切换角色"
@@ -14,12 +15,16 @@
       >
       <span class="role-avatar-name">{{ selectedRole.label }}</span>
     </button>
-    <RolePermissionGuide
-      v-if="selectedRole && roleGuidePageKey"
-      :key="roleGuidePageKey"
-      ref="rolePermissionGuideRef"
-      :page-key="roleGuidePageKey"
-    />
+    <Teleport to="body">
+      <RolePermissionGuide
+        v-if="selectedRole && roleGuidePageKey"
+        :key="roleGuidePageKey"
+        ref="rolePermissionGuideRef"
+        :page-key="roleGuidePageKey"
+        :get-anchor-element="getRoleAvatarElement"
+        @avatar-click="toggleRoleCard"
+      />
+    </Teleport>
     <div v-if="showRoleCard" class="role-card-popover" @click.stop>
       <RolePermissionCard
         compact
@@ -57,6 +62,7 @@ const route = useRoute();
 const router = useRouter();
 const showRoleCard = ref(false);
 const roleMenuRef = ref(null);
+const roleAvatarButtonRef = ref(null);
 const rolePermissionGuideRef = ref(null);
 
 const roleGuidePageKey = computed(() => {
@@ -66,6 +72,10 @@ const roleGuidePageKey = computed(() => {
 const selectedRole = computed(() => {
   return roles.find((role) => role.value === selectedRoleValue.value);
 });
+
+const getRoleAvatarElement = () => {
+  return roleAvatarButtonRef.value;
+};
 
 const toggleRoleCard = () => {
   if (rolePermissionGuideRef.value) {
@@ -146,7 +156,6 @@ onBeforeUnmount(() => {
 <style scoped lang="less">
 .role-card-entry {
   position: relative;
-  z-index: 200;
   flex-shrink: 0;
 }
 
