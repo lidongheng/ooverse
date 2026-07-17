@@ -35,7 +35,7 @@ const refreshRolePermission = async (roleValue) => {
     return;
   }
 
-  initializePermissionConfig(permissionResponse.data);
+  initializePermissionConfig(permissionResponse.data, roleValue);
 };
 
 const handleRoleSelection = (roleValue) => {

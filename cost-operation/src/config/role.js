@@ -70,34 +70,33 @@ function createRegionItemsFromGeoTree(geoTree) {
   });
 }
 
-export function initializePermissionConfig(data) {
+function clearFrontSalesPermissionState() {
+  allRegionPermissionList.splice(0, allRegionPermissionList.length);
+  allCloudServerPermissionList.splice(0, allCloudServerPermissionList.length);
+  regionPermissionList.splice(0, regionPermissionList.length);
+  cloudServerPermissionList.splice(0, cloudServerPermissionList.length);
+}
+
+function clearCxoPermissionState() {
+  allCxoCloudPermissionList.splice(0, allCxoCloudPermissionList.length);
+  allDataTypePermissionList.splice(0, allDataTypePermissionList.length);
+  Object.keys(cxoDataTypePermissionMap).forEach((code) => {
+    delete cxoDataTypePermissionMap[code];
+  });
+}
+
+export function initializePermissionConfig(data, roleValue) {
   if (data === null || Array.isArray(data)) {
     // 接口异常时 data 可能为 null，业务上按空权限数据处理。
     roles.splice(0, roles.length);
-    allRegionPermissionList.splice(0, allRegionPermissionList.length);
-    allCloudServerPermissionList.splice(0, allCloudServerPermissionList.length);
-    allCxoCloudPermissionList.splice(0, allCxoCloudPermissionList.length);
-    allDataTypePermissionList.splice(0, allDataTypePermissionList.length);
-    Object.keys(cxoDataTypePermissionMap).forEach((code) => {
-      delete cxoDataTypePermissionMap[code];
-    });
+    clearFrontSalesPermissionState();
+    clearCxoPermissionState();
     rolePermissionList.splice(0, rolePermissionList.length);
-    regionPermissionList.splice(0, regionPermissionList.length);
-    cloudServerPermissionList.splice(0, cloudServerPermissionList.length);
     return;
   }
 
   const roleDimension = data.totalDimenPermConfigList.find(
     (item) => item.permDimenTypeCode === "1",
-  );
-  const cloudServerDimension = data.totalDimenPermConfigList.find(
-    (item) => item.permDimenTypeCode === "4",
-  );
-  const dataTypeDimension = data.totalDimenPermConfigList.find(
-    (item) => item.permDimenTypeCode === "3",
-  );
-  const cxoCloudDimension = data.totalDimenPermConfigList.find(
-    (item) => item.permDimenTypeCode === "6",
   );
   const onlyFrontSalesRole = data.ruleCodeList.length === 1
     && data.ruleCodeList[0].code === "ROLE_FRONT_SALES";
@@ -112,6 +111,38 @@ export function initializePermissionConfig(data) {
   });
 
   roles.splice(0, roles.length, ...roleList);
+  rolePermissionList.splice(0, rolePermissionList.length, ...data.ruleCodeList);
+  clearFrontSalesPermissionState();
+  clearCxoPermissionState();
+
+  if (isCxoRole(roleValue)) {
+    const dataTypeDimension = data.totalDimenPermConfigList.find(
+      (item) => item.permDimenTypeCode === "3",
+    );
+    const cxoCloudDimension = data.totalDimenPermConfigList.find(
+      (item) => item.permDimenTypeCode === "6",
+    );
+
+    Object.entries(data.dataTypeCodeMap).forEach(([cloudCode, dataTypeList]) => {
+      cxoDataTypePermissionMap[cloudCode] = dataTypeList.map((item) => ({ ...item }));
+    });
+    allDataTypePermissionList.splice(
+      0,
+      allDataTypePermissionList.length,
+      ...createPermissionItems(dataTypeDimension.detailList),
+    );
+    allCxoCloudPermissionList.splice(
+      0,
+      allCxoCloudPermissionList.length,
+      ...createPermissionItems(cxoCloudDimension.detailList),
+    );
+    return;
+  }
+
+  const cloudServerDimension = data.totalDimenPermConfigList.find(
+    (item) => item.permDimenTypeCode === "4",
+  );
+
   allRegionPermissionList.splice(
     0,
     allRegionPermissionList.length,
@@ -122,23 +153,6 @@ export function initializePermissionConfig(data) {
     allCloudServerPermissionList.length,
     ...createPermissionItems(cloudServerDimension.detailList),
   );
-  allCxoCloudPermissionList.splice(
-    0,
-    allCxoCloudPermissionList.length,
-    ...createPermissionItems(cxoCloudDimension.detailList),
-  );
-  allDataTypePermissionList.splice(
-    0,
-    allDataTypePermissionList.length,
-    ...createPermissionItems(dataTypeDimension.detailList),
-  );
-  Object.keys(cxoDataTypePermissionMap).forEach((code) => {
-    delete cxoDataTypePermissionMap[code];
-  });
-  Object.entries(data.dataTypeCodeMap).forEach(([cloudCode, dataTypeList]) => {
-    cxoDataTypePermissionMap[cloudCode] = dataTypeList.map((item) => ({ ...item }));
-  });
-  rolePermissionList.splice(0, rolePermissionList.length, ...data.ruleCodeList);
   regionPermissionList.splice(0, regionPermissionList.length, ...data.regionCodeList);
   cloudServerPermissionList.splice(
     0,

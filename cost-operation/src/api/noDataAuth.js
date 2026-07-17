@@ -285,8 +285,36 @@ const toOrderView = (record) => ({
   approver: record.approver,
 });
 
-export const getNoDataAuthOptions = (_config) =>
-  waitMock(clone(userAuthMock));
+const createNoDataAuthOptions = (config) => {
+  const currentRole = config ? config.headers['X-Current-Role'] : undefined;
+
+  if (currentRole === 'ROLE_CXO') {
+    return {
+      account: userAuthMock.account,
+      totalDimenPermConfigList: userAuthMock.totalDimenPermConfigList.filter((dimension) => {
+        return ['1', '3', '6'].includes(dimension.permDimenTypeCode);
+      }),
+      ruleCodeList: userAuthMock.ruleCodeList,
+      dataTypeCodeMap: userAuthMock.dataTypeCodeMap,
+    };
+  }
+
+  return {
+    account: userAuthMock.account,
+    totalDimenPermConfigList: userAuthMock.totalDimenPermConfigList.filter((dimension) => {
+      return ['1', '2', '3', '4'].includes(dimension.permDimenTypeCode);
+    }),
+    ruleCodeList: userAuthMock.ruleCodeList,
+    areaCodeList: [],
+    dataTypeCodeList: [],
+    cloudServerNameList: userAuthMock.cloudServerNameList,
+    regionCodeList: userAuthMock.regionCodeList,
+    geoTree: userAuthMock.geoTree,
+  };
+};
+
+export const getNoDataAuthOptions = (config) =>
+  waitMock(clone(createNoDataAuthOptions(config)));
 
 export const getNoDataAuthList = (params, _config) => {
   let list = applications;

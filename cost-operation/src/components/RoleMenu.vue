@@ -112,7 +112,7 @@ const refreshRolePermission = async (roleValue) => {
     return;
   }
 
-  initializePermissionConfig(permissionResponse.data);
+  initializePermissionConfig(permissionResponse.data, roleValue);
 };
 
 const handleRoleSelection = (roleValue) => {
@@ -139,8 +139,9 @@ const initializeRoleMenuData = async () => {
   }
 
   // 刷新业务页面时不会经过 RoleSelect，需要在 Header 内补齐共享权限数据。
+  const requestedRoleValue = selectedRoleValue.value;
   const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
-  initializePermissionConfig(permissionResponse.data);
+  initializePermissionConfig(permissionResponse.data, requestedRoleValue);
 
   if (permissionResponse.data === null) {
     router.replace("/roleSelect");

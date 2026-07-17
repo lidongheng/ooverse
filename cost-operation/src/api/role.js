@@ -1,10 +1,7 @@
-export function getPermissionConfig(_config) {
+export function getPermissionConfig(config) {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({
-        status: 200,
-        massage: "success",
-        data: {
+      const permissionData = {
           account: "12345678",
           geoTree: [
             {
@@ -244,8 +241,37 @@ export function getPermissionConfig(_config) {
               }
             ],
             CXO_CLOUD_GENERAL_COMPUTING: [] // 通算/存储
-          }
-        },
+          },
+        };
+      const currentRole = config ? config.headers['X-Current-Role'] : undefined;
+      const dimensionCodeList = currentRole === 'ROLE_CXO'
+        ? ['1', '3', '6']
+        : ['1', '3', '4'];
+      const totalDimenPermConfigList = permissionData.totalDimenPermConfigList.filter(
+        (dimension) => dimensionCodeList.includes(dimension.permDimenTypeCode),
+      );
+      const data = currentRole === 'ROLE_CXO'
+        ? {
+          account: permissionData.account,
+          totalDimenPermConfigList,
+          ruleCodeList: permissionData.ruleCodeList,
+          dataTypeCodeMap: permissionData.dataTypeCodeMap,
+        }
+        : {
+          account: permissionData.account,
+          totalDimenPermConfigList,
+          ruleCodeList: permissionData.ruleCodeList,
+          areaCodeList: [],
+          dataTypeCodeList: [],
+          cloudServerNameList: permissionData.cloudServerNameList,
+          regionCodeList: permissionData.regionCodeList,
+          geoTree: permissionData.geoTree,
+        };
+
+      resolve({
+        status: 200,
+        massage: "success",
+        data,
       });
     }, 500);
   });
