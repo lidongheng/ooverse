@@ -231,7 +231,7 @@
           <el-button class="quick-apply-button" :loading="submitLoading" @click="handleSubmit">
             快捷申请
           </el-button>
-          <el-button class="back-button" @click="handleBack">
+          <el-button class="back-button" :loading="backLoading" @click="handleBack">
             返回
           </el-button>
         </div>
@@ -250,9 +250,13 @@ import {
   getNoDataAuthList,
   getNoDataAuthOptions,
 } from "@/api/noDataAuth";
+import { getPermissionConfig } from '@/api/role';
 import {
   getCurrentRoleRequestConfig,
+  initializePermissionConfig,
   isCxoRole,
+  ROLE_CODE_ORDER,
+  saveSelectedRole,
   selectedRoleValue,
 } from '@/config/role';
 
@@ -285,6 +289,8 @@ const ownedDataTypes = ref([]);
 const unownedDataTypes = ref([]);
 const approvingRows = ref([]);
 const submitLoading = ref(false);
+const backLoading = ref(false);
+const SAFE_ROLE_SELECT_PATH = '/roleSelect?fromUnauthorized=1';
 
 const form = reactive({
   cloudServerCodes: [],
@@ -609,11 +615,71 @@ const handleStatusChange = async (status) => {
   }
 };
 
-const handleBack = () => {
-  router.back();
+const getSafeReturnContext = () => {
+  const returnTo = route.query.returnTo;
+  const returnRole = route.query.returnRole;
+
+  if (typeof returnTo !== 'string' || !returnTo.startsWith('/')) {
+    return { returnTo: SAFE_ROLE_SELECT_PATH };
+  }
+
+  const resolvedRoute = router.resolve(returnTo);
+  if (resolvedRoute.matched.length === 0 || resolvedRoute.path === '/Unauthorized') {
+    return { returnTo: SAFE_ROLE_SELECT_PATH };
+  }
+
+  if (returnRole === undefined) {
+    return { returnTo: resolvedRoute.fullPath };
+  }
+
+  if (typeof returnRole !== 'string' || !ROLE_CODE_ORDER.includes(returnRole)) {
+    return { returnTo: SAFE_ROLE_SELECT_PATH };
+  }
+
+  return {
+    returnTo: resolvedRoute.fullPath,
+    returnRole,
+  };
+};
+
+const handleBack = async () => {
+  if (backLoading.value) {
+    return;
+  }
+
+  backLoading.value = true;
+  const returnContext = getSafeReturnContext();
+
+  try {
+    if (returnContext.returnRole) {
+      const permissionResponse = await getPermissionConfig({
+        headers: {
+          'X-Current-Role': returnContext.returnRole,
+        },
+      });
+
+      if (permissionResponse.data === null || Array.isArray(permissionResponse.data)) {
+        throw new Error('恢复原角色权限失败');
+      }
+
+      // 权限响应成功后再提交角色状态，失败时申请页角色和数据保持不变。
+      initializePermissionConfig(permissionResponse.data, returnContext.returnRole);
+      saveSelectedRole(returnContext.returnRole);
+    }
+
+    await router.replace(returnContext.returnTo);
+  } catch {
+    ElMessage.error('恢复原角色失败，请稍后重试');
+  } finally {
+    backLoading.value = false;
+  }
 };
 
 watch(selectedRoleValue, async () => {
+  if (backLoading.value) {
+    return;
+  }
+
   // 角色首次确定或切换后，需要按最新角色重新获取页面权限数据。
   await Promise.all([loadOptions(), loadApprovingRows()]);
 }, { immediate: true });

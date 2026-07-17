@@ -2,6 +2,7 @@
   <main v-if="showRoleSelector" class="role-select-page">
     <RolePermissionCard
       immediate-role-change
+      return-to="/roleSelect?fromUnauthorized=1"
       @role-change="handleRoleSelection"
       @start="handleStart"
     />
@@ -10,7 +11,7 @@
 
 <script setup>
 import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { getPermissionConfig } from "@/api/role";
 import RolePermissionCard from "@/components/RolePermissionCard.vue";
 import {
@@ -19,8 +20,10 @@ import {
   getRoleTargetPath,
   initializePermissionConfig,
   saveSelectedRole,
+  selectedRoleValue,
 } from "@/config/role";
 
+const route = useRoute();
 const router = useRouter();
 const showRoleSelector = ref(false);
 let permissionRequestId = 0;
@@ -50,7 +53,12 @@ const handleStart = async (roleValue) => {
     return;
   }
 
-  router.push("/Unauthorized");
+  router.push({
+    path: '/Unauthorized',
+    query: {
+      returnTo: '/roleSelect?fromUnauthorized=1',
+    },
+  });
 };
 
 onMounted(async () => {
@@ -63,6 +71,17 @@ onMounted(async () => {
   }
 
   const ownedRoleCodes = permissionResponse.data.ruleCodeList.map((role) => role.code);
+
+  if (route.query.fromUnauthorized === '1') {
+    // 从申请页返回时只展示角色选择，不再执行无权限自动跳转。
+    if (ownedRoleCodes.includes(selectedRoleValue.value)) {
+      pendingPermissionRequest = refreshRolePermission(selectedRoleValue.value);
+      await pendingPermissionRequest;
+    }
+
+    showRoleSelector.value = true;
+    return;
+  }
 
   if (ownedRoleCodes.includes("ROLE_CXO")) {
     // 默认选中角色1后，按角色头重新获取对应的数据权限。
@@ -81,7 +100,12 @@ onMounted(async () => {
       return;
     }
 
-    router.replace("/Unauthorized");
+    router.replace({
+      path: '/Unauthorized',
+      query: {
+        returnTo: '/roleSelect?fromUnauthorized=1',
+      },
+    });
     return;
   }
 

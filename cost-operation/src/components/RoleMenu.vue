@@ -24,15 +24,22 @@
         :get-anchor-element="getRoleAvatarElement"
         @avatar-click="toggleRoleCard"
       />
+      <div
+        v-if="showRoleCard"
+        class="role-card-popover"
+        :style="roleCardPopoverStyle"
+        @click.stop
+      >
+        <RolePermissionCard
+          compact
+          immediate-role-change
+          :return-to="permissionReturnTo"
+          :return-role="permissionReturnRole"
+          @role-change="handleRoleSelection"
+          @start="handleStart"
+        />
+      </div>
     </Teleport>
-    <div v-if="showRoleCard" class="role-card-popover" @click.stop>
-      <RolePermissionCard
-        compact
-        immediate-role-change
-        @role-change="handleRoleSelection"
-        @start="handleStart"
-      />
-    </div>
   </div>
 </template>
 
@@ -67,6 +74,9 @@ const showRoleCard = ref(false);
 const roleMenuRef = ref(null);
 const roleAvatarButtonRef = ref(null);
 const rolePermissionGuideRef = ref(null);
+const permissionReturnTo = ref('');
+const permissionReturnRole = ref('');
+const roleCardPopoverStyle = ref({});
 let permissionRequestId = 0;
 let pendingPermissionRequest = Promise.resolve();
 
@@ -82,12 +92,34 @@ const getRoleAvatarElement = () => {
   return roleAvatarButtonRef.value;
 };
 
+const updateRoleCardPosition = () => {
+  if (!showRoleCard.value || !roleAvatarButtonRef.value) {
+    return;
+  }
+
+  const avatarRect = roleAvatarButtonRef.value.getBoundingClientRect();
+  roleCardPopoverStyle.value = {
+    top: `${avatarRect.bottom + 10}px`,
+    right: `${window.innerWidth - avatarRect.right}px`,
+  };
+};
+
 const toggleRoleCard = () => {
   if (rolePermissionGuideRef.value) {
     rolePermissionGuideRef.value.closeGuide();
   }
 
+  if (!showRoleCard.value) {
+    // 打开角色卡片时保留原业务上下文，申请页返回后恢复原角色和页面。
+    permissionReturnTo.value = route.fullPath;
+    permissionReturnRole.value = selectedRoleValue.value;
+  }
+
   showRoleCard.value = !showRoleCard.value;
+
+  if (showRoleCard.value) {
+    updateRoleCardPosition();
+  }
 };
 
 const closeRoleCard = (event) => {
@@ -128,7 +160,13 @@ const handleStart = async (roleValue) => {
     return;
   }
 
-  router.push("/Unauthorized");
+  router.push({
+    path: '/Unauthorized',
+    query: {
+      returnTo: permissionReturnTo.value,
+      returnRole: permissionReturnRole.value,
+    },
+  });
 };
 
 const initializeRoleMenuData = async () => {
@@ -162,17 +200,26 @@ const initializeRoleMenuData = async () => {
   }
 
   if (selectedRoleValue.value && !canEnterRolePage(selectedRoleValue.value)) {
-    router.replace("/Unauthorized");
+    router.replace({
+      path: '/Unauthorized',
+      query: {
+        returnTo: '/roleSelect?fromUnauthorized=1',
+      },
+    });
   }
 };
 
 onMounted(() => {
   document.addEventListener("click", closeRoleCard);
+  window.addEventListener('resize', updateRoleCardPosition);
+  window.addEventListener('scroll', updateRoleCardPosition, true);
   initializeRoleMenuData();
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", closeRoleCard);
+  window.removeEventListener('resize', updateRoleCardPosition);
+  window.removeEventListener('scroll', updateRoleCardPosition, true);
 });
 </script>
 
@@ -214,9 +261,7 @@ onBeforeUnmount(() => {
 }
 
 .role-card-popover {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
+  position: fixed;
   z-index: 200;
 }
 </style>

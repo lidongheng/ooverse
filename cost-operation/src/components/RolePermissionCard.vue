@@ -205,6 +205,8 @@ import {
 const props = defineProps({
   compact: Boolean,
   immediateRoleChange: Boolean,
+  returnTo: String,
+  returnRole: String,
 });
 
 const emit = defineEmits(["role-change", "start"]);
@@ -316,11 +318,26 @@ const handleStart = () => {
   emit("start", selectedRole.value);
 };
 
+const getReturnQuery = () => {
+  const returnQuery = {};
+
+  if (props.returnTo) {
+    returnQuery.returnTo = props.returnTo;
+  }
+
+  if (props.returnRole) {
+    returnQuery.returnRole = props.returnRole;
+  }
+
+  return returnQuery;
+};
+
 const handlePermissionApply = () => {
   if (isCxoRoleSelected.value) {
     router.push({
       path: "/Unauthorized",
       query: {
+        ...getReturnQuery(),
         cxoCloudCodes: selectedCxoCloudCodes.value.join(","),
         dataTypeCodes: selectedDataTypeCodes.value.join(","),
       },
@@ -331,6 +348,7 @@ const handlePermissionApply = () => {
   router.push({
     path: "/Unauthorized",
     query: {
+      ...getReturnQuery(),
       regionCodes: selectedRegionCodes.value.join(","),
     },
   });
