@@ -38,6 +38,9 @@ const ROLE_AVATAR_MAP = {
 export const roles = reactive([]);
 export const allRegionPermissionList = reactive([]);
 export const allCloudServerPermissionList = reactive([]);
+export const allCxoCloudPermissionList = reactive([]);
+export const allDataTypePermissionList = reactive([]);
+export const cxoDataTypePermissionMap = reactive({});
 export const rolePermissionList = reactive([]);
 export const regionPermissionList = reactive([]);
 export const cloudServerPermissionList = reactive([]);
@@ -73,6 +76,11 @@ export function initializePermissionConfig(data) {
     roles.splice(0, roles.length);
     allRegionPermissionList.splice(0, allRegionPermissionList.length);
     allCloudServerPermissionList.splice(0, allCloudServerPermissionList.length);
+    allCxoCloudPermissionList.splice(0, allCxoCloudPermissionList.length);
+    allDataTypePermissionList.splice(0, allDataTypePermissionList.length);
+    Object.keys(cxoDataTypePermissionMap).forEach((code) => {
+      delete cxoDataTypePermissionMap[code];
+    });
     rolePermissionList.splice(0, rolePermissionList.length);
     regionPermissionList.splice(0, regionPermissionList.length);
     cloudServerPermissionList.splice(0, cloudServerPermissionList.length);
@@ -84,6 +92,12 @@ export function initializePermissionConfig(data) {
   );
   const cloudServerDimension = data.totalDimenPermConfigList.find(
     (item) => item.permDimenTypeCode === "4",
+  );
+  const dataTypeDimension = data.totalDimenPermConfigList.find(
+    (item) => item.permDimenTypeCode === "3",
+  );
+  const cxoCloudDimension = data.totalDimenPermConfigList.find(
+    (item) => item.permDimenTypeCode === "6",
   );
   const onlyFrontSalesRole = data.ruleCodeList.length === 1
     && data.ruleCodeList[0].code === "ROLE_FRONT_SALES";
@@ -108,6 +122,22 @@ export function initializePermissionConfig(data) {
     allCloudServerPermissionList.length,
     ...createPermissionItems(cloudServerDimension.detailList),
   );
+  allCxoCloudPermissionList.splice(
+    0,
+    allCxoCloudPermissionList.length,
+    ...createPermissionItems(cxoCloudDimension.detailList),
+  );
+  allDataTypePermissionList.splice(
+    0,
+    allDataTypePermissionList.length,
+    ...createPermissionItems(dataTypeDimension.detailList),
+  );
+  Object.keys(cxoDataTypePermissionMap).forEach((code) => {
+    delete cxoDataTypePermissionMap[code];
+  });
+  Object.entries(data.dataTypeCodeMap).forEach(([cloudCode, dataTypeList]) => {
+    cxoDataTypePermissionMap[cloudCode] = dataTypeList.map((item) => ({ ...item }));
+  });
   rolePermissionList.splice(0, rolePermissionList.length, ...data.ruleCodeList);
   regionPermissionList.splice(0, regionPermissionList.length, ...data.regionCodeList);
   cloudServerPermissionList.splice(
@@ -126,20 +156,22 @@ export function getRoleTargetPath(roleValue) {
   return "/saleHome";
 }
 
-export function isRoleWithoutDataPermissionControl(roleValue) {
+export function isCxoRole(roleValue) {
   return roleValue === "ROLE_CXO";
 }
 
-export function hasDataPermission() {
+export function hasDataPermission(roleValue) {
+  if (isCxoRole(roleValue)) {
+    return Object.values(cxoDataTypePermissionMap).some((dataTypeList) => {
+      return dataTypeList.length > 0;
+    });
+  }
+
   return regionPermissionList.length > 0 || cloudServerPermissionList.length > 0;
 }
 
 export function canEnterRolePage(roleValue) {
-  if (isRoleWithoutDataPermissionControl(roleValue)) {
-    return true;
-  }
-
-  return hasDataPermission();
+  return hasDataPermission(roleValue);
 }
 
 export function isRoleDisabled(roleValue) {
@@ -153,4 +185,16 @@ export function saveSelectedRole(roleValue) {
 
 export function syncSelectedRoleFromSession() {
   selectedRoleValue.value = sessionStorage.getItem(ROLE_STORAGE_KEY);
+}
+
+export function getCurrentRoleRequestConfig() {
+  if (!selectedRoleValue.value) {
+    return undefined;
+  }
+
+  return {
+    headers: {
+      'X-Current-Role': selectedRoleValue.value,
+    },
+  };
 }

@@ -28,7 +28,9 @@
     <div v-if="showRoleCard" class="role-card-popover" @click.stop>
       <RolePermissionCard
         compact
-        @start="handleRoleChange"
+        immediate-role-change
+        @role-change="handleRoleSelection"
+        @start="handleStart"
       />
     </div>
   </div>
@@ -42,6 +44,7 @@ import RolePermissionGuide from '@/components/RolePermissionGuide.vue';
 import { getPermissionConfig } from "@/api/role";
 import {
   canEnterRolePage,
+  getCurrentRoleRequestConfig,
   getRoleTargetPath,
   initializePermissionConfig,
   isRoleDisabled,
@@ -64,6 +67,8 @@ const showRoleCard = ref(false);
 const roleMenuRef = ref(null);
 const roleAvatarButtonRef = ref(null);
 const rolePermissionGuideRef = ref(null);
+let permissionRequestId = 0;
+let pendingPermissionRequest = Promise.resolve();
 
 const roleGuidePageKey = computed(() => {
   return ROLE_GUIDE_PAGE_KEY_MAP[route.name];
@@ -98,8 +103,24 @@ const closeRoleCard = (event) => {
   showRoleCard.value = false;
 };
 
-const handleRoleChange = (roleValue) => {
+const refreshRolePermission = async (roleValue) => {
   saveSelectedRole(roleValue);
+  const requestId = ++permissionRequestId;
+  const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
+
+  if (requestId !== permissionRequestId) {
+    return;
+  }
+
+  initializePermissionConfig(permissionResponse.data);
+};
+
+const handleRoleSelection = (roleValue) => {
+  pendingPermissionRequest = refreshRolePermission(roleValue);
+};
+
+const handleStart = async (roleValue) => {
+  await pendingPermissionRequest;
   showRoleCard.value = false;
 
   if (canEnterRolePage(roleValue)) {
@@ -118,7 +139,7 @@ const initializeRoleMenuData = async () => {
   }
 
   // 刷新业务页面时不会经过 RoleSelect，需要在 Header 内补齐共享权限数据。
-  const permissionResponse = await getPermissionConfig();
+  const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
   initializePermissionConfig(permissionResponse.data);
 
   if (permissionResponse.data === null) {
@@ -135,7 +156,8 @@ const initializeRoleMenuData = async () => {
     if (sortedRuleCodeList.length === 0) {
       return;
     }
-    saveSelectedRole(sortedRuleCodeList[0].code);
+    pendingPermissionRequest = refreshRolePermission(sortedRuleCodeList[0].code);
+    await pendingPermissionRequest;
   }
 
   if (selectedRoleValue.value && !canEnterRolePage(selectedRoleValue.value)) {

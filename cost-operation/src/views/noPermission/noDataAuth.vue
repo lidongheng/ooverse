@@ -3,7 +3,7 @@
     <section class="no-data-auth__content">
       <header class="page-title">
         <h1>您没有当前页面的数据权限</h1>
-        <el-tooltip content="可选择云服务和 Region 后发起权限申请" placement="right">
+        <el-tooltip :content="permissionTooltip" placement="right">
           <el-icon class="page-title__icon"><QuestionFilled /></el-icon>
         </el-tooltip>
       </header>
@@ -26,7 +26,7 @@
             >
               <span class="owned-card__name">
                 <FourGridIcon />
-                {{ cloudServer.code }}
+                {{ isCxoRoleSelected ? cloudServer.name : cloudServer.code }}
               </span>
               <span class="owned-card__meta" />
             </button>
@@ -34,17 +34,17 @@
         </div>
 
         <div class="owned-section">
-          <h2 class="owned-section__title">Region</h2>
+          <h2 class="owned-section__title">{{ secondaryPermissionLabel }}</h2>
           <div class="owned-list owned-list--region">
             <button
-              v-for="region in ownedRegions"
-              :key="region.code"
+              v-for="permission in ownedSecondaryPermissions"
+              :key="permission.code"
               class="owned-card"
               type="button"
             >
               <span class="owned-card__name">
                 <FourGridIcon />
-                {{ region.name }}
+                {{ permission.name }}
               </span>
               <span class="owned-card__meta" />
             </button>
@@ -91,15 +91,36 @@
               <span class="resource-card__name">
                 <span class="resource-card__checkbox" aria-hidden="true" />
                 <FourGridIcon />
-                {{ cloudServer.code }}
+                {{ isCxoRoleSelected ? cloudServer.name : cloudServer.code }}
               </span>
               <span class="resource-card__meta" />
             </button>
           </div>
         </el-form-item>
 
-        <el-form-item label="Region" prop="regionCodes" required>
-          <section class="region-panel">
+        <el-form-item
+          :label="secondaryPermissionLabel"
+          :prop="secondaryPermissionField"
+          required
+        >
+          <div v-if="isCxoRoleSelected" class="service-grid">
+            <button
+              v-for="dataType in unownedDataTypes"
+              :key="dataType.code"
+              class="resource-card"
+              :class="{ 'resource-card--active': form.dataTypeCodes.includes(dataType.code) }"
+              type="button"
+              @click="toggleDataType(dataType.code)"
+            >
+              <span class="resource-card__name">
+                <span class="resource-card__checkbox" aria-hidden="true" />
+                <FourGridIcon />
+                {{ dataType.name }}
+              </span>
+              <span class="resource-card__meta" />
+            </button>
+          </div>
+          <section v-if="!isCxoRoleSelected" class="region-panel">
             <div class="region-toolbar">
               <label class="region-toolbar__label">大区</label>
               <el-select v-model="areaFilter" class="region-toolbar__select" @change="handleAreaChange">
@@ -229,7 +250,11 @@ import {
   getNoDataAuthList,
   getNoDataAuthOptions,
 } from "@/api/noDataAuth";
-import { selectedRoleValue } from '@/config/role';
+import {
+  getCurrentRoleRequestConfig,
+  isCxoRole,
+  selectedRoleValue,
+} from '@/config/role';
 
 const FourGridIcon = {
   name: "FourGridIcon",
@@ -256,18 +281,22 @@ const unownedCloudServers = ref([]);
 const unownedRegionGroups = ref([]);
 const ownedCloudServers = ref([]);
 const ownedRegions = ref([]);
+const ownedDataTypes = ref([]);
+const unownedDataTypes = ref([]);
 const approvingRows = ref([]);
 const submitLoading = ref(false);
 
 const form = reactive({
   cloudServerCodes: [],
   regionCodes: [],
+  dataTypeCodes: [],
   reason: "",
 });
 
 const rules = {
   cloudServerCodes: [{ required: true, message: "请选择云服务", trigger: "change" }],
   regionCodes: [{ required: true, message: "请选择Region", trigger: "change" }],
+  dataTypeCodes: [{ required: true, message: "请选择数据类型", trigger: "change" }],
   reason: [{ required: true, message: "请输入申请原因", trigger: "blur" }],
 };
 
@@ -276,6 +305,19 @@ const allRegionCodes = computed(() =>
   unownedRegionGroups.value.flatMap((group) => group.children.map((region) => region.code))
 );
 const cloudServerApprover = computed(() => ownedCloudServers.value[0]?.userName);
+const isCxoRoleSelected = computed(() => isCxoRole(selectedRoleValue.value));
+const secondaryPermissionLabel = computed(() => {
+  return isCxoRoleSelected.value ? '数据类型' : 'Region';
+});
+const secondaryPermissionField = computed(() => {
+  return isCxoRoleSelected.value ? 'dataTypeCodes' : 'regionCodes';
+});
+const permissionTooltip = computed(() => {
+  return `可选择云服务和 ${secondaryPermissionLabel.value} 后发起权限申请`;
+});
+const ownedSecondaryPermissions = computed(() => {
+  return isCxoRoleSelected.value ? ownedDataTypes.value : ownedRegions.value;
+});
 const isAllRegionsChecked = computed(() =>
   allRegionCodes.value.length > 0
   && allRegionCodes.value.every((code) => form.regionCodes.includes(code))
@@ -328,6 +370,20 @@ const createRegionNameMap = (regionGroups) => {
 };
 
 const initializeDefaultSelection = () => {
+  if (isCxoRoleSelected.value) {
+    const selectedCxoCloudCodeSet = new Set(parseQueryCodes(route.query.cxoCloudCodes));
+    const selectedDataTypeCodeSet = new Set(parseQueryCodes(route.query.dataTypeCodes));
+
+    form.cloudServerCodes = unownedCloudServers.value
+      .map((cloudServer) => cloudServer.code)
+      .filter((code) => selectedCxoCloudCodeSet.has(code));
+    form.dataTypeCodes = unownedDataTypes.value
+      .map((dataType) => dataType.code)
+      .filter((code) => selectedDataTypeCodeSet.has(code));
+    form.regionCodes = [];
+    return;
+  }
+
   const selectedRegionCodeSet = new Set(parseQueryCodes(route.query.regionCodes));
 
   // 从权限卡片跳转过来时，用 regionCode 与申请页可申请 Region 做匹配。
@@ -335,20 +391,8 @@ const initializeDefaultSelection = () => {
   form.cloudServerCodes = unownedCloudServers.value.map((cloudServer) => cloudServer.code);
 };
 
-const getRoleRequestConfig = () => {
-  if (!selectedRoleValue.value) {
-    return undefined;
-  }
-
-  return {
-    headers: {
-      'X-Current-Role': selectedRoleValue.value,
-    },
-  };
-};
-
 const loadOptions = async () => {
-  const response = await getNoDataAuthOptions(getRoleRequestConfig());
+  const response = await getNoDataAuthOptions(getCurrentRoleRequestConfig());
   const optionData = response.data;
 
   if (optionData === null || Array.isArray(optionData)) {
@@ -357,13 +401,56 @@ const loadOptions = async () => {
     unownedRegionGroups.value = [];
     ownedCloudServers.value = [];
     ownedRegions.value = [];
+    ownedDataTypes.value = [];
+    unownedDataTypes.value = [];
     openedGroups.value = [];
     return;
   }
 
+  const cloudServerDimensionCode = isCxoRoleSelected.value ? '6' : '4';
   const cloudServerDimension = optionData.totalDimenPermConfigList.find(
-    (dimension) => dimension.permDimenTypeCode === "4"
+    (dimension) => dimension.permDimenTypeCode === cloudServerDimensionCode
   );
+
+  if (isCxoRoleSelected.value) {
+    const dataTypeDimension = optionData.totalDimenPermConfigList.find(
+      (dimension) => dimension.permDimenTypeCode === '3'
+    );
+    const ownedCxoCloudCodeSet = new Set(
+      Object.entries(optionData.dataTypeCodeMap)
+        .filter(([, dataTypeList]) => dataTypeList.length > 0)
+        .map(([cloudCode]) => cloudCode)
+    );
+    const ownedDataTypeCodeSet = new Set(
+      Object.values(optionData.dataTypeCodeMap)
+        .flatMap((dataTypeList) => dataTypeList.map((dataType) => dataType.code))
+    );
+
+    ownedCloudServers.value = cloudServerDimension.detailList
+      .filter((item) => ownedCxoCloudCodeSet.has(item.permCode))
+      .map((item) => ({
+        code: item.permCode,
+        name: item.permName,
+        userName: optionData.dataTypeCodeMap[item.permCode][0].userName,
+      }));
+    unownedCloudServers.value = cloudServerDimension.detailList
+      .filter((item) => !ownedCxoCloudCodeSet.has(item.permCode))
+      .map((item) => ({ code: item.permCode, name: item.permName }));
+    ownedDataTypes.value = dataTypeDimension.detailList
+      .filter((item) => ownedDataTypeCodeSet.has(item.permCode))
+      .map((item) => ({ code: item.permCode, name: item.permName }));
+    unownedDataTypes.value = dataTypeDimension.detailList
+      .filter((item) => !ownedDataTypeCodeSet.has(item.permCode))
+      .map((item) => ({ code: item.permCode, name: item.permName }));
+    unownedRegionGroups.value = [];
+    ownedRegions.value = [];
+    openedGroups.value = [];
+    initializeDefaultSelection();
+    return;
+  }
+
+  ownedDataTypes.value = [];
+  unownedDataTypes.value = [];
   // geoTree 父节点只作为展开分组标题，Region 卡片展示子节点完整名称。
   const regionNameMap = createRegionNameMap(optionData.geoTree);
 
@@ -385,7 +472,7 @@ const loadApprovingRows = async () => {
   const response = await getNoDataAuthList({
     account: "12345678",
     status: "approving",
-  }, getRoleRequestConfig());
+  }, getCurrentRoleRequestConfig());
 
   approvingRows.value = response.data.map((row, index) => ({
     index: index + 1,
@@ -414,6 +501,11 @@ const toggleCloudServer = (code) => {
 const toggleRegion = (code) => {
   form.regionCodes = toggleById(form.regionCodes, code);
   validateField("regionCodes");
+};
+
+const toggleDataType = (code) => {
+  form.dataTypeCodes = toggleById(form.dataTypeCodes, code);
+  validateField("dataTypeCodes");
 };
 
 const getRegionGroupCodes = (group) => group.children.map((region) => region.code);
@@ -473,6 +565,7 @@ const handleKeywordChange = () => {
 const resetForm = () => {
   form.cloudServerCodes = [];
   form.regionCodes = [];
+  form.dataTypeCodes = [];
   form.reason = "";
   formRef.value.clearValidate();
 };
@@ -493,14 +586,14 @@ const handleSubmit = async () => {
       description: form.reason,
       dataRoleList: [
         ...form.cloudServerCodes,
-        ...form.regionCodes,
+        ...(isCxoRoleSelected.value ? form.dataTypeCodes : form.regionCodes),
       ].map((dataRoleId) => ({
         dataRoleId,
         validityPeriod: "2027-10-31",
       })),
     };
 
-    await createNoDataAuth(payload, getRoleRequestConfig());
+    await createNoDataAuth(payload, getCurrentRoleRequestConfig());
     ElMessage.success("快捷申请已提交，后续跳转页面待接入");
     await loadApprovingRows();
 

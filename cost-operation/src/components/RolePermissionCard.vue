@@ -29,7 +29,87 @@
       </button>
     </div>
 
-    <section v-if="showPermissionSection" class="permission-section">
+    <section v-if="isCxoRoleSelected" class="permission-section">
+      <h2>数据权限</h2>
+      <p class="section-label">云服务</p>
+
+      <div class="permission-block permission-block--owned">
+        <p class="permission-summary">已拥有云服务权限数量：{{ ownedCxoClouds.length }}个</p>
+        <div v-if="ownedCxoClouds.length > 0" class="cloud-list">
+          <article
+            v-for="cloudServer in ownedCxoClouds"
+            :key="cloudServer.value"
+            class="cloud-card cloud-card--active"
+          >
+            <span class="cloud-card__icon"></span>
+            <strong>{{ cloudServer.label }}</strong>
+          </article>
+        </div>
+      </div>
+
+      <div v-if="unavailableCxoClouds.length > 0" class="permission-block">
+        <div class="permission-status">
+          <p>未拥有云服务权限数量：{{ unavailableCxoClouds.length }}个</p>
+          <p>已选择数量：{{ selectedCxoCloudCodes.length }}个</p>
+        </div>
+        <div class="cloud-list">
+          <label
+            v-for="cloudServer in unavailableCxoClouds"
+            :key="cloudServer.value"
+            class="cloud-card cloud-card--selectable"
+            :class="{ 'cloud-card--selected': selectedCxoCloudCodes.includes(cloudServer.value) }"
+          >
+            <span class="cloud-card__icon"></span>
+            <strong>{{ cloudServer.label }}</strong>
+            <input
+              v-model="selectedCxoCloudCodes"
+              type="checkbox"
+              :value="cloudServer.value"
+            >
+          </label>
+        </div>
+      </div>
+
+      <p class="section-label section-label--data-type">数据类型</p>
+      <div class="permission-block permission-block--owned">
+        <p class="permission-summary">已拥有数据类型权限数量：{{ ownedDataTypes.length }}个</p>
+        <div v-if="ownedDataTypes.length > 0" class="data-type-grid">
+          <article
+            v-for="dataType in ownedDataTypes"
+            :key="dataType.value"
+            class="data-type-card data-type-card--owned"
+          >
+            <span class="data-type-card__icon"></span>
+            <strong>{{ dataType.label }}</strong>
+          </article>
+        </div>
+      </div>
+
+      <div v-if="unavailableDataTypes.length > 0" class="permission-block">
+        <div class="permission-status">
+          <p>未拥有数据类型权限数量：{{ unavailableDataTypes.length }}个</p>
+          <p>已选择数量：{{ selectedDataTypeCodes.length }}个</p>
+        </div>
+        <div class="data-type-grid">
+          <label
+            v-for="dataType in unavailableDataTypes"
+            :key="dataType.value"
+            class="data-type-card data-type-card--selectable"
+            :class="{ 'data-type-card--selected': selectedDataTypeCodes.includes(dataType.value) }"
+          >
+            <span class="data-type-card__icon"></span>
+            <strong>{{ dataType.label }}</strong>
+            <input
+              v-model="selectedDataTypeCodes"
+              type="checkbox"
+              :value="dataType.value"
+            >
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section v-else-if="showPermissionSection" class="permission-section">
       <h2>数据权限</h2>
       <p class="section-label">云服务</p>
       <div class="cloud-list">
@@ -109,11 +189,14 @@ import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Check } from "@element-plus/icons-vue";
 import {
+  allCxoCloudPermissionList,
   allCloudServerPermissionList,
+  allDataTypePermissionList,
   allRegionPermissionList,
   canEnterRolePage,
   cloudServerPermissionList,
-  isRoleWithoutDataPermissionControl,
+  cxoDataTypePermissionMap,
+  isCxoRole,
   regionPermissionList,
   roles,
   selectedRoleValue,
@@ -128,6 +211,8 @@ const emit = defineEmits(["role-change", "start"]);
 const router = useRouter();
 const selectedRole = ref("");
 const selectedRegionCodes = ref([]);
+const selectedCxoCloudCodes = ref([]);
+const selectedDataTypeCodes = ref([]);
 
 const ownedRegionCodes = computed(() => {
   return regionPermissionList.map((region) => region.code);
@@ -149,11 +234,49 @@ const unavailableRegions = computed(() => {
   });
 });
 
+const isCxoRoleSelected = computed(() => isCxoRole(selectedRole.value));
+
+const ownedCxoClouds = computed(() => {
+  return allCxoCloudPermissionList.filter((cloudServer) => {
+    return cxoDataTypePermissionMap[cloudServer.value].length > 0;
+  });
+});
+
+const unavailableCxoClouds = computed(() => {
+  return allCxoCloudPermissionList.filter((cloudServer) => {
+    return cxoDataTypePermissionMap[cloudServer.value].length === 0;
+  });
+});
+
+const ownedDataTypeCodes = computed(() => {
+  return Array.from(new Set(
+    Object.values(cxoDataTypePermissionMap).flatMap((dataTypeList) => {
+      return dataTypeList.map((dataType) => dataType.code);
+    }),
+  ));
+});
+
+const ownedDataTypes = computed(() => {
+  return allDataTypePermissionList.filter((dataType) => {
+    return ownedDataTypeCodes.value.includes(dataType.value);
+  });
+});
+
+const unavailableDataTypes = computed(() => {
+  return allDataTypePermissionList.filter((dataType) => {
+    return !ownedDataTypeCodes.value.includes(dataType.value);
+  });
+});
+
 const showPermissionSection = computed(() => {
-  return !isRoleWithoutDataPermissionControl(selectedRole.value);
+  return Boolean(selectedRole.value);
 });
 
 const showApplyButton = computed(() => {
+  if (isCxoRoleSelected.value) {
+    return selectedCxoCloudCodes.value.length > 0 || selectedDataTypeCodes.value.length > 0;
+  }
+
   return showPermissionSection.value && selectedRegionCodes.value.length > 0;
 });
 
@@ -180,6 +303,9 @@ const handleRoleClick = (role) => {
   }
 
   selectedRole.value = role.value;
+  selectedRegionCodes.value = [];
+  selectedCxoCloudCodes.value = [];
+  selectedDataTypeCodes.value = [];
 
   if (props.immediateRoleChange) {
     emit("role-change", role.value);
@@ -191,6 +317,17 @@ const handleStart = () => {
 };
 
 const handlePermissionApply = () => {
+  if (isCxoRoleSelected.value) {
+    router.push({
+      path: "/Unauthorized",
+      query: {
+        cxoCloudCodes: selectedCxoCloudCodes.value.join(","),
+        dataTypeCodes: selectedDataTypeCodes.value.join(","),
+      },
+    });
+    return;
+  }
+
   router.push({
     path: "/Unauthorized",
     query: {
@@ -327,7 +464,8 @@ watch(
 .permission-section {
   min-height: 0;
   flex: 1;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 
@@ -348,6 +486,37 @@ watch(
   font-size: 14px;
   line-height: 20px;
   font-weight: 700;
+}
+
+.section-label--data-type {
+  margin-top: 4px;
+}
+
+.permission-block {
+  flex-shrink: 0;
+}
+
+.permission-block--owned {
+  margin-bottom: 14px;
+}
+
+.permission-summary,
+.permission-status {
+  margin: 0 0 10px;
+  color: rgba(37, 34, 92, 0.72);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 700;
+}
+
+.permission-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+
+  p {
+    margin: 0;
+  }
 }
 
 .cloud-list {
@@ -382,6 +551,25 @@ watch(
   background: rgba(247, 248, 255, 0.96);
 }
 
+.cloud-card--selectable,
+.data-type-card--selectable {
+  cursor: pointer;
+
+  input {
+    width: 15px;
+    height: 15px;
+    margin: 0 0 0 auto;
+    accent-color: #3f5cff;
+  }
+}
+
+.cloud-card--selected,
+.data-type-card--selected {
+  border-color: #3f5cff;
+  background: #f2f4ff;
+  color: #253bc2;
+}
+
 .cloud-card__icon {
   width: 14px;
   height: 14px;
@@ -390,6 +578,41 @@ watch(
     linear-gradient(90deg, transparent 46%, #40329c 46%, #40329c 54%, transparent 54%),
     linear-gradient(0deg, transparent 46%, #40329c 46%, #40329c 54%, transparent 54%),
     rgba(64, 50, 156, 0.12);
+}
+
+.data-type-grid {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+
+.data-type-card {
+  min-width: 0;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(58, 50, 115, 0.18);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #28245f;
+  box-sizing: border-box;
+}
+
+.data-type-card--owned {
+  border-color: rgba(63, 92, 255, 0.28);
+  background: rgba(247, 248, 255, 0.96);
+}
+
+.data-type-card__icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #40329c;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.76);
 }
 
 .region-block {
@@ -571,6 +794,11 @@ watch(
     padding: 0 12px;
   }
 
+  .data-type-card {
+    height: 40px;
+    padding: 0 12px;
+  }
+
   .region-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-height: 106px;
@@ -594,6 +822,7 @@ watch(
   }
 
   .cloud-list,
+  .data-type-grid,
   .region-grid {
     grid-template-columns: 1fr;
   }

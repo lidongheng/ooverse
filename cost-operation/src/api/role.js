@@ -1,4 +1,4 @@
-export function getPermissionConfig() {
+export function getPermissionConfig(_config) {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
@@ -110,22 +110,49 @@ export function getPermissionConfig() {
                 {
                   permCode: "ROLE_CXO",
                   permName: "角色1",
+                  approver: "李四 23456789",
                 },
                 {
                   permCode: "ROLE_FRONT_SALES",
                   permName: "角色2",
+                  approver: "李四 23456789",
                 },
                 {
                   permCode: "ROLE_INTERNAL_CUSTOMER",
                   permName: "角色3",
+                  approver: "李四 23456789",
                 },
                 {
                   permCode: "ROLE_SERVICE_PE",
                   permName: "角色4",
+                  approver: "李四 23456789",
                 },
                 {
                   permCode: "ROLE_OPS_ANALYST",
                   permName: "角色5",
+                  approver: "李四 23456789",
+                },
+              ],
+            },
+            {
+              permDimenTypeCode: "3",
+              permDimenTypeName: "数据类型",
+              detailList: [
+                {
+                  permCode: "DATA_COST",
+                  permName: "成本",
+                },
+                {
+                  permCode: "DATA_EFFICIENCY",
+                  permName: "效率",
+                },
+                {
+                  permCode: "DATA_OPERATE",
+                  permName: "销毛",
+                },
+                {
+                  permCode: "DATA_REVENUE",
+                  permName: "流水",
                 },
               ],
             },
@@ -145,6 +172,20 @@ export function getPermissionConfig() {
                   permCode: "CLOUD_EVS",
                   permName: "XPU",
                 },
+              ],
+            },
+            {
+              permDimenTypeCode: "6",
+              permDimenTypeName: "CXO云服务类型",
+              detailList: [
+                {
+                  permCode: "CXO_CLOUD_GENERAL_COMPUTING",
+                  permName: "通算/存储",
+                },
+                {
+                  permCode: "CXO_CLOUD_NPU",
+                  permName: "智算",
+                }
               ],
             },
           ],
@@ -185,6 +226,25 @@ export function getPermissionConfig() {
               validEndTime: "2027-02-18",
             },
           ],
+          dataTypeCodeMap: {
+            CXO_CLOUD_NPU: [ // 智算
+              {
+                name: "成本",
+                code: "DATA_COST",
+                validEndTime: "2027-10-31",
+                account: "12345678",
+                userName: "张三",
+              },
+              {
+                name: "效率",
+                code: "DATA_EFFICIENCY",
+                validEndTime: "2027-10-31",
+                account: "12345678",
+                userName: "张三",
+              }
+            ],
+            CXO_CLOUD_GENERAL_COMPUTING: [] // 通算/存储
+          }
         },
       });
     }, 500);

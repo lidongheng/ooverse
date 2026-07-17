@@ -1,6 +1,10 @@
 <template>
   <main v-if="showRoleSelector" class="role-select-page">
-    <RolePermissionCard @start="handleStart" />
+    <RolePermissionCard
+      immediate-role-change
+      @role-change="handleRoleSelection"
+      @start="handleStart"
+    />
   </main>
 </template>
 
@@ -11,6 +15,7 @@ import { getPermissionConfig } from "@/api/role";
 import RolePermissionCard from "@/components/RolePermissionCard.vue";
 import {
   canEnterRolePage,
+  getCurrentRoleRequestConfig,
   getRoleTargetPath,
   initializePermissionConfig,
   saveSelectedRole,
@@ -18,10 +23,34 @@ import {
 
 const router = useRouter();
 const showRoleSelector = ref(false);
+let permissionRequestId = 0;
+let pendingPermissionRequest = Promise.resolve();
 
-const handleStart = (roleValue) => {
+const refreshRolePermission = async (roleValue) => {
   saveSelectedRole(roleValue);
-  router.push(getRoleTargetPath(roleValue));
+  const requestId = ++permissionRequestId;
+  const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
+
+  if (requestId !== permissionRequestId) {
+    return;
+  }
+
+  initializePermissionConfig(permissionResponse.data);
+};
+
+const handleRoleSelection = (roleValue) => {
+  pendingPermissionRequest = refreshRolePermission(roleValue);
+};
+
+const handleStart = async (roleValue) => {
+  await pendingPermissionRequest;
+
+  if (canEnterRolePage(roleValue)) {
+    router.push(getRoleTargetPath(roleValue));
+    return;
+  }
+
+  router.push("/Unauthorized");
 };
 
 onMounted(async () => {
@@ -36,14 +65,16 @@ onMounted(async () => {
   const ownedRoleCodes = permissionResponse.data.ruleCodeList.map((role) => role.code);
 
   if (ownedRoleCodes.includes("ROLE_CXO")) {
-    // CXO 暂不做数据权限控制，进入首页时停留在角色选择页并默认选中角色1。
-    saveSelectedRole("ROLE_CXO");
+    // 默认选中角色1后，按角色头重新获取对应的数据权限。
+    pendingPermissionRequest = refreshRolePermission("ROLE_CXO");
+    await pendingPermissionRequest;
     showRoleSelector.value = true;
     return;
   }
 
   if (ownedRoleCodes.length === 1 && ownedRoleCodes[0] === "ROLE_FRONT_SALES") {
-    saveSelectedRole("ROLE_FRONT_SALES");
+    pendingPermissionRequest = refreshRolePermission("ROLE_FRONT_SALES");
+    await pendingPermissionRequest;
 
     if (canEnterRolePage("ROLE_FRONT_SALES")) {
       router.replace(getRoleTargetPath("ROLE_FRONT_SALES"));

@@ -110,6 +110,28 @@ const userAuthMock = {
       ],
     },
     {
+      permDimenTypeCode: "3",
+      permDimenTypeName: "数据类型",
+      detailList: [
+        {
+          permCode: "DATA_COST",
+          permName: "成本",
+        },
+        {
+          permCode: "DATA_EFFICIENCY",
+          permName: "效率",
+        },
+        {
+          permCode: "DATA_OPERATE",
+          permName: "销毛",
+        },
+        {
+          permCode: "DATA_REVENUE",
+          permName: "流水",
+        },
+      ],
+    },
+    {
       permDimenTypeCode: "4",
       permDimenTypeName: "云服务类型",
       detailList: [
@@ -124,6 +146,20 @@ const userAuthMock = {
         {
           permCode: "CLOUD_XPU",
           permName: "XPU",
+        },
+      ],
+    },
+    {
+      permDimenTypeCode: "6",
+      permDimenTypeName: "CXO云服务类型",
+      detailList: [
+        {
+          permCode: "CXO_CLOUD_GENERAL_COMPUTING",
+          permName: "通算/存储",
+        },
+        {
+          permCode: "CXO_CLOUD_NPU",
+          permName: "智算",
         },
       ],
     },
@@ -176,6 +212,25 @@ const userAuthMock = {
       userName: "张三",
     },
   ],
+  dataTypeCodeMap: {
+    CXO_CLOUD_NPU: [
+      {
+        name: "成本",
+        code: "DATA_COST",
+        validEndTime: "2027-10-31",
+        account: "12345678",
+        userName: "张三",
+      },
+      {
+        name: "效率",
+        code: "DATA_EFFICIENCY",
+        validEndTime: "2027-10-31",
+        account: "12345678",
+        userName: "张三",
+      },
+    ],
+    CXO_CLOUD_GENERAL_COMPUTING: [],
+  },
 };
 
 const statusTextMap = {
