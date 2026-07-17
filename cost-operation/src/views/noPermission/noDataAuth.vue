@@ -220,7 +220,7 @@
 </template>
 
 <script setup>
-import { computed, h, onMounted, reactive, ref } from "vue";
+import { computed, h, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { QuestionFilled, Search } from "@element-plus/icons-vue";
@@ -229,6 +229,7 @@ import {
   getNoDataAuthList,
   getNoDataAuthOptions,
 } from "@/api/noDataAuth";
+import { selectedRoleValue } from '@/config/role';
 
 const FourGridIcon = {
   name: "FourGridIcon",
@@ -334,8 +335,20 @@ const initializeDefaultSelection = () => {
   form.cloudServerCodes = unownedCloudServers.value.map((cloudServer) => cloudServer.code);
 };
 
+const getRoleRequestConfig = () => {
+  if (!selectedRoleValue.value) {
+    return undefined;
+  }
+
+  return {
+    headers: {
+      'X-Current-Role': selectedRoleValue.value,
+    },
+  };
+};
+
 const loadOptions = async () => {
-  const response = await getNoDataAuthOptions();
+  const response = await getNoDataAuthOptions(getRoleRequestConfig());
   const optionData = response.data;
 
   if (optionData === null || Array.isArray(optionData)) {
@@ -372,7 +385,7 @@ const loadApprovingRows = async () => {
   const response = await getNoDataAuthList({
     account: "12345678",
     status: "approving",
-  });
+  }, getRoleRequestConfig());
 
   approvingRows.value = response.data.map((row, index) => ({
     index: index + 1,
@@ -487,7 +500,7 @@ const handleSubmit = async () => {
       })),
     };
 
-    await createNoDataAuth(payload);
+    await createNoDataAuth(payload, getRoleRequestConfig());
     ElMessage.success("快捷申请已提交，后续跳转页面待接入");
     await loadApprovingRows();
 
@@ -507,10 +520,10 @@ const handleBack = () => {
   router.back();
 };
 
-onMounted(async () => {
-  await loadOptions();
-  await loadApprovingRows();
-});
+watch(selectedRoleValue, async () => {
+  // 角色首次确定或切换后，需要按最新角色重新获取页面权限数据。
+  await Promise.all([loadOptions(), loadApprovingRows()]);
+}, { immediate: true });
 </script>
 
 <style lang="less" scoped>

@@ -89,6 +89,13 @@ export function getPermissionConfig() {
           ruleCodeList: [
             {
               name: "张三",
+              code: "ROLE_CXO",
+              validEndTime: "2027-10-31",
+              account: "12345678",
+              userName: "张三",
+            },
+            {
+              name: "张三",
               code: "ROLE_FRONT_SALES",
               validEndTime: "2027-10-31",
               account: "12345678",

@@ -230,10 +230,10 @@ const toOrderView = (record) => ({
   approver: record.approver,
 });
 
-export const getNoDataAuthOptions = () =>
+export const getNoDataAuthOptions = (_config) =>
   waitMock(clone(userAuthMock));
 
-export const getNoDataAuthList = (params) => {
+export const getNoDataAuthList = (params, _config) => {
   let list = applications;
 
   if (params.status !== "all") {
@@ -243,7 +243,7 @@ export const getNoDataAuthList = (params) => {
   return waitMock(clone(list.map(toOrderView)));
 };
 
-export const createNoDataAuth = (payload) => {
+export const createNoDataAuth = (payload, _config) => {
   const record = {
     user: payload.userId,
     order: `ORDER${recordSeed}`,
