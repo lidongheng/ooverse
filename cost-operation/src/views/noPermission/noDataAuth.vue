@@ -24,7 +24,7 @@
           >
             <el-table-column prop="cloudServerName" label="云服务">
               <template #default="scope">
-                <span class="owned-card__name">
+                <span v-if="scope.row.cloudServerCode" class="owned-card__name">
                   <FourGridIcon />
                   {{ scope.row.cloudServerName }}
                 </span>
@@ -32,7 +32,7 @@
             </el-table-column>
             <el-table-column prop="dataTypeName" label="数据类型">
               <template #default="scope">
-                <span class="owned-card__name">
+                <span v-if="scope.row.dataTypeCode" class="owned-card__name">
                   <FourGridIcon />
                   {{ scope.row.dataTypeName }}
                 </span>
@@ -104,7 +104,7 @@
         class="apply-form"
         label-position="top"
       >
-        <el-form-item prop="cloudServerCodes" required>
+        <el-form-item prop="cloudServerCodes" :required="!isCxoRoleSelected">
           <template #label>
             <span class="form-item-title">
               <span>云服务</span>
@@ -133,7 +133,7 @@
         <el-form-item
           :label="secondaryPermissionLabel"
           :prop="secondaryPermissionField"
-          required
+          :required="!isCxoRoleSelected"
         >
           <div v-if="isCxoRoleSelected" class="service-grid">
             <button
@@ -332,19 +332,25 @@ const form = reactive({
   reason: "",
 });
 
-const rules = {
-  cloudServerCodes: [{ required: true, message: "请选择云服务", trigger: "change" }],
-  regionCodes: [{ required: true, message: "请选择Region", trigger: "change" }],
-  dataTypeCodes: [{ required: true, message: "请选择数据类型", trigger: "change" }],
-  reason: [{ required: true, message: "请输入申请原因", trigger: "blur" }],
-};
-
 const areaOptions = computed(() => unownedRegionGroups.value.map((group) => group.name));
 const allRegionCodes = computed(() =>
   unownedRegionGroups.value.flatMap((group) => group.children.map((region) => region.code))
 );
 const cloudServerApprover = computed(() => ownedCloudServers.value[0]?.userName);
 const isCxoRoleSelected = computed(() => isCxoRole(selectedRoleValue.value));
+const rules = computed(() => {
+  if (isCxoRoleSelected.value) {
+    return {
+      reason: [{ required: true, message: "请输入申请原因", trigger: "blur" }],
+    };
+  }
+
+  return {
+    cloudServerCodes: [{ required: true, message: "请选择云服务", trigger: "change" }],
+    regionCodes: [{ required: true, message: "请选择Region", trigger: "change" }],
+    reason: [{ required: true, message: "请输入申请原因", trigger: "blur" }],
+  };
+});
 const secondaryPermissionLabel = computed(() => {
   return isCxoRoleSelected.value ? '数据类型' : 'Region';
 });
@@ -422,6 +428,41 @@ const getCxoOwnedSpanMethod = ({ row, columnIndex }) => {
   };
 };
 
+const createCxoOwnedTableRows = (cloudServerList, dataTypeList) => {
+  if (cloudServerList.length > 0 && dataTypeList.length > 0) {
+    return cloudServerList.flatMap((cloudServer) => {
+      const tableRows = dataTypeList.map((dataType) => ({
+        cloudServerCode: cloudServer.code,
+        cloudServerName: cloudServer.name,
+        dataTypeCode: dataType.code,
+        dataTypeName: dataType.name,
+        cloudRowSpan: 0,
+      }));
+
+      tableRows[0].cloudRowSpan = dataTypeList.length;
+      return tableRows;
+    });
+  }
+
+  if (cloudServerList.length > 0) {
+    return cloudServerList.map((cloudServer) => ({
+      cloudServerCode: cloudServer.code,
+      cloudServerName: cloudServer.name,
+      dataTypeCode: null,
+      dataTypeName: null,
+      cloudRowSpan: 1,
+    }));
+  }
+
+  return dataTypeList.map((dataType) => ({
+    cloudServerCode: null,
+    cloudServerName: null,
+    dataTypeCode: dataType.code,
+    dataTypeName: dataType.name,
+    cloudRowSpan: 1,
+  }));
+};
+
 const initializeDefaultSelection = () => {
   if (isCxoRoleSelected.value) {
     const selectedCxoCloudCodeSet = new Set(parseQueryCodes(route.query.cxoCloudCodes));
@@ -471,42 +512,20 @@ const loadOptions = async () => {
       (dimension) => dimension.permDimenTypeCode === '3'
     );
     const ownedCxoCloudCodeSet = new Set(
-      Object.entries(optionData.dataTypeCodeMap)
-        .filter(([, dataTypeList]) => dataTypeList.length > 0)
-        .map(([cloudCode]) => cloudCode)
+      optionData.cloudServerNameList.map((cloudServer) => cloudServer.code)
     );
     const ownedDataTypeCodeSet = new Set(
-      Object.values(optionData.dataTypeCodeMap)
-        .flatMap((dataTypeList) => dataTypeList.map((dataType) => dataType.code))
+      optionData.dataTypeCodeList.map((dataType) => dataType.code)
     );
 
-    ownedCloudServers.value = cloudServerDimension.detailList
-      .filter((item) => ownedCxoCloudCodeSet.has(item.permCode))
-      .map((item) => ({
-        code: item.permCode,
-        name: item.permName,
-        userName: optionData.dataTypeCodeMap[item.permCode][0].userName,
-      }));
-    ownedCxoTableRows.value = cloudServerDimension.detailList
-      .filter((item) => ownedCxoCloudCodeSet.has(item.permCode))
-      .flatMap((item) => {
-        const dataTypeList = optionData.dataTypeCodeMap[item.permCode];
-        const tableRows = dataTypeList.map((dataType) => ({
-          cloudServerCode: item.permCode,
-          cloudServerName: item.permName,
-          dataTypeCode: dataType.code,
-          dataTypeName: dataType.name,
-          cloudRowSpan: 0,
-        }));
-
-        tableRows[0].cloudRowSpan = dataTypeList.length;
-        return tableRows;
-      });
+    ownedCloudServers.value = optionData.cloudServerNameList;
+    ownedDataTypes.value = optionData.dataTypeCodeList;
+    ownedCxoTableRows.value = createCxoOwnedTableRows(
+      optionData.cloudServerNameList,
+      optionData.dataTypeCodeList
+    );
     unownedCloudServers.value = cloudServerDimension.detailList
       .filter((item) => !ownedCxoCloudCodeSet.has(item.permCode))
-      .map((item) => ({ code: item.permCode, name: item.permName }));
-    ownedDataTypes.value = dataTypeDimension.detailList
-      .filter((item) => ownedDataTypeCodeSet.has(item.permCode))
       .map((item) => ({ code: item.permCode, name: item.permName }));
     unownedDataTypes.value = dataTypeDimension.detailList
       .filter((item) => !ownedDataTypeCodeSet.has(item.permCode))
@@ -645,6 +664,15 @@ const resetForm = () => {
 };
 
 const handleSubmit = async () => {
+  if (
+    isCxoRoleSelected.value
+    && form.cloudServerCodes.length === 0
+    && form.dataTypeCodes.length === 0
+  ) {
+    ElMessage.warning("请选择云服务或数据类型");
+    return;
+  }
+
   try {
     await formRef.value.validate();
   } catch {

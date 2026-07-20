@@ -223,25 +223,38 @@ export function getPermissionConfig(config) {
               validEndTime: "2027-02-18",
             },
           ],
-          dataTypeCodeMap: {
-            CXO_CLOUD_NPU: [ // 智算
-              {
-                name: "成本",
-                code: "DATA_COST",
-                validEndTime: "2027-10-31",
-                account: "12345678",
-                userName: "张三",
-              },
-              {
-                name: "效率",
-                code: "DATA_EFFICIENCY",
-                validEndTime: "2027-10-31",
-                account: "12345678",
-                userName: "张三",
-              }
-            ],
-            CXO_CLOUD_GENERAL_COMPUTING: [] // 通算/存储
-          },
+          cxoCloudServerNameList: [
+            {
+              name: "通算/存储",
+              code: "CXO_CLOUD_GENERAL_COMPUTING",
+              validEndTime: null,
+              account: "12345678",
+              userName: "张三",
+            },
+            {
+              name: "智算",
+              code: "CXO_CLOUD_NPU",
+              validEndTime: null,
+              account: "12345678",
+              userName: "张三",
+            },
+          ],
+          cxoDataTypeCodeList: [
+            {
+              name: "成本",
+              code: "DATA_COST",
+              validEndTime: "2027-10-31",
+              account: "12345678",
+              userName: "张三",
+            },
+            {
+              name: "效率",
+              code: "DATA_EFFICIENCY",
+              validEndTime: "2027-10-31",
+              account: "12345678",
+              userName: "张三",
+            },
+          ],
         };
       const currentRole = config ? config.headers['X-Current-Role'] : undefined;
       const dimensionCodeList = currentRole === 'ROLE_CXO'
@@ -255,7 +268,8 @@ export function getPermissionConfig(config) {
           account: permissionData.account,
           totalDimenPermConfigList,
           ruleCodeList: permissionData.ruleCodeList,
-          dataTypeCodeMap: permissionData.dataTypeCodeMap,
+          dataTypeCodeList: permissionData.cxoDataTypeCodeList,
+          cloudServerNameList: permissionData.cxoCloudServerNameList,
         }
         : {
           account: permissionData.account,

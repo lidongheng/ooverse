@@ -66,7 +66,8 @@ export const allRegionPermissionList = reactive([]);
 export const allCloudServerPermissionList = reactive([]);
 export const allCxoCloudPermissionList = reactive([]);
 export const allDataTypePermissionList = reactive([]);
-export const cxoDataTypePermissionMap = reactive({});
+export const cxoCloudServerPermissionList = reactive([]);
+export const cxoDataTypePermissionList = reactive([]);
 export const rolePermissionList = reactive([]);
 export const regionPermissionList = reactive([]);
 export const cloudServerPermissionList = reactive([]);
@@ -108,9 +109,8 @@ function clearFrontSalesPermissionState() {
 function clearCxoPermissionState() {
   allCxoCloudPermissionList.splice(0, allCxoCloudPermissionList.length);
   allDataTypePermissionList.splice(0, allDataTypePermissionList.length);
-  Object.keys(cxoDataTypePermissionMap).forEach((code) => {
-    delete cxoDataTypePermissionMap[code];
-  });
+  cxoCloudServerPermissionList.splice(0, cxoCloudServerPermissionList.length);
+  cxoDataTypePermissionList.splice(0, cxoDataTypePermissionList.length);
 }
 
 export function initializePermissionConfig(data, roleValue) {
@@ -151,9 +151,6 @@ export function initializePermissionConfig(data, roleValue) {
       (item) => item.permDimenTypeCode === "6",
     );
 
-    Object.entries(data.dataTypeCodeMap).forEach(([cloudCode, dataTypeList]) => {
-      cxoDataTypePermissionMap[cloudCode] = dataTypeList.map((item) => ({ ...item }));
-    });
     allDataTypePermissionList.splice(
       0,
       allDataTypePermissionList.length,
@@ -163,6 +160,16 @@ export function initializePermissionConfig(data, roleValue) {
       0,
       allCxoCloudPermissionList.length,
       ...createPermissionItems(cxoCloudDimension.detailList),
+    );
+    cxoCloudServerPermissionList.splice(
+      0,
+      cxoCloudServerPermissionList.length,
+      ...data.cloudServerNameList,
+    );
+    cxoDataTypePermissionList.splice(
+      0,
+      cxoDataTypePermissionList.length,
+      ...data.dataTypeCodeList,
     );
     return;
   }
@@ -204,9 +211,7 @@ export function isCxoRole(roleValue) {
 
 export function hasDataPermission(roleValue) {
   if (isCxoRole(roleValue)) {
-    return Object.values(cxoDataTypePermissionMap).some((dataTypeList) => {
-      return dataTypeList.length > 0;
-    });
+    return cxoCloudServerPermissionList.length > 0 || cxoDataTypePermissionList.length > 0;
   }
 
   return regionPermissionList.length > 0 || cloudServerPermissionList.length > 0;

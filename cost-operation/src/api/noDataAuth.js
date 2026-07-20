@@ -216,25 +216,38 @@ const userAuthMock = {
       userName: "张三",
     },
   ],
-  dataTypeCodeMap: {
-    CXO_CLOUD_NPU: [
-      {
-        name: "成本",
-        code: "DATA_COST",
-        validEndTime: "2027-10-31",
-        account: "12345678",
-        userName: "张三",
-      },
-      {
-        name: "效率",
-        code: "DATA_EFFICIENCY",
-        validEndTime: "2027-10-31",
-        account: "12345678",
-        userName: "张三",
-      },
-    ],
-    CXO_CLOUD_GENERAL_COMPUTING: [],
-  },
+  cxoCloudServerNameList: [
+    {
+      name: "通算/存储",
+      code: "CXO_CLOUD_GENERAL_COMPUTING",
+      validEndTime: null,
+      account: "12345678",
+      userName: "张三",
+    },
+    {
+      name: "智算",
+      code: "CXO_CLOUD_NPU",
+      validEndTime: null,
+      account: "12345678",
+      userName: "张三",
+    },
+  ],
+  cxoDataTypeCodeList: [
+    {
+      name: "成本",
+      code: "DATA_COST",
+      validEndTime: "2027-10-31",
+      account: "12345678",
+      userName: "张三",
+    },
+    {
+      name: "效率",
+      code: "DATA_EFFICIENCY",
+      validEndTime: "2027-10-31",
+      account: "12345678",
+      userName: "张三",
+    },
+  ],
 };
 
 const statusTextMap = {
@@ -299,7 +312,8 @@ const createNoDataAuthOptions = (config) => {
         return ['1', '3', '6'].includes(dimension.permDimenTypeCode);
       }),
       ruleCodeList: userAuthMock.ruleCodeList,
-      dataTypeCodeMap: userAuthMock.dataTypeCodeMap,
+      dataTypeCodeList: userAuthMock.cxoDataTypeCodeList,
+      cloudServerNameList: userAuthMock.cxoCloudServerNameList,
     };
   }
 

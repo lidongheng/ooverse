@@ -65,7 +65,7 @@
               v-model="selectedCxoCloudCodes"
               type="checkbox"
               :value="cloudServer.value"
-          >
+            >
           </label>
         </div>
       </div>
@@ -198,7 +198,8 @@ import {
   allRegionPermissionList,
   canEnterRolePage,
   cloudServerPermissionList,
-  cxoDataTypePermissionMap,
+  cxoCloudServerPermissionList,
+  cxoDataTypePermissionList,
   isCxoRole,
   regionPermissionList,
   roles,
@@ -241,24 +242,24 @@ const unavailableRegions = computed(() => {
 
 const isCxoRoleSelected = computed(() => isCxoRole(selectedRole.value));
 
+const ownedCxoCloudCodes = computed(() => {
+  return cxoCloudServerPermissionList.map((cloudServer) => cloudServer.code);
+});
+
 const ownedCxoClouds = computed(() => {
   return allCxoCloudPermissionList.filter((cloudServer) => {
-    return cxoDataTypePermissionMap[cloudServer.value].length > 0;
+    return ownedCxoCloudCodes.value.includes(cloudServer.value);
   });
 });
 
 const unavailableCxoClouds = computed(() => {
   return allCxoCloudPermissionList.filter((cloudServer) => {
-    return cxoDataTypePermissionMap[cloudServer.value].length === 0;
+    return !ownedCxoCloudCodes.value.includes(cloudServer.value);
   });
 });
 
 const ownedDataTypeCodes = computed(() => {
-  return Array.from(new Set(
-    Object.values(cxoDataTypePermissionMap).flatMap((dataTypeList) => {
-      return dataTypeList.map((dataType) => dataType.code);
-    }),
-  ));
+  return cxoDataTypePermissionList.map((dataType) => dataType.code);
 });
 
 const ownedDataTypes = computed(() => {
