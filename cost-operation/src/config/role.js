@@ -16,6 +16,32 @@ export const DISABLED_ROLE_CODES = [
   "ROLE_OPS_ANALYST",
 ];
 
+// 权限图标由前端维护，后续只需要在这里补充对应的 SVG 图标名称。
+export const PERMISSION_ICON_NAME_MAP = {
+  CLOUD_ECS: '',
+  CLOUD_EVS: '',
+  CLOUD_OBS: '',
+  CLOUD_XPU: '',
+  CXO_CLOUD_GENERAL_COMPUTING: '',
+  CXO_CLOUD_NPU: '',
+  DATA_COST: '',
+  DATA_EFFICIENCY: '',
+  DATA_OPERATE: '',
+  DATA_REVENUE: '',
+  REGION_AP_JAKARTA: '',
+  REGION_AP_SINGAPORE: '',
+  REGION_CN_BEIJING_ONE: '',
+  REGION_CN_EAST: '',
+  REGION_CN_HONGKONG: '',
+  REGION_CN_NORTH: '',
+  REGION_CN_SHANGHAI_ONE: '',
+  REGION_CN_SHENZHEN: '',
+  REGION_CN_SOUTH: '',
+  REGION_CN_WEST: '',
+  REGION_EU_FRANKFURT: '',
+  REGION_US_SILICON_VALLEY: '',
+};
+
 // 正式头像提供后，在这里引入 PNG 文件，并将下方 null 替换为对应的变量。
 // import roleCxoAvatar from "@/assets/images/role/role-cxo.png";
 // import roleFrontSalesAvatar from "@/assets/images/role/role-front-sales.png";
@@ -52,6 +78,7 @@ function createPermissionItems(detailList) {
       label: item.permName,
       value: item.permCode,
       code: item.permCode,
+      iconName: PERMISSION_ICON_NAME_MAP[item.permCode],
     };
   });
 }
@@ -63,6 +90,7 @@ function createRegionItemsFromGeoTree(geoTree) {
         label: region.name,
         value: region.code,
         code: region.code,
+        iconName: PERMISSION_ICON_NAME_MAP[region.code],
         areaCode: area.code,
         areaName: area.name,
       };

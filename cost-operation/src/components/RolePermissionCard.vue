@@ -41,7 +41,7 @@
             :key="cloudServer.value"
             class="cloud-card cloud-card--active"
           >
-            <span class="cloud-card__icon"></span>
+            <SvgIcon class="permission-svg-icon" :icon-name="cloudServer.iconName" />
             <strong>{{ cloudServer.label }}</strong>
           </article>
         </div>
@@ -59,13 +59,13 @@
             class="cloud-card cloud-card--selectable"
             :class="{ 'cloud-card--selected': selectedCxoCloudCodes.includes(cloudServer.value) }"
           >
-            <span class="cloud-card__icon"></span>
+            <SvgIcon class="permission-svg-icon" :icon-name="cloudServer.iconName" />
             <strong>{{ cloudServer.label }}</strong>
             <input
               v-model="selectedCxoCloudCodes"
               type="checkbox"
               :value="cloudServer.value"
-            >
+          >
           </label>
         </div>
       </div>
@@ -79,7 +79,7 @@
             :key="dataType.value"
             class="data-type-card data-type-card--owned"
           >
-            <span class="data-type-card__icon"></span>
+            <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
             <strong>{{ dataType.label }}</strong>
           </article>
         </div>
@@ -97,7 +97,7 @@
             class="data-type-card data-type-card--selectable"
             :class="{ 'data-type-card--selected': selectedDataTypeCodes.includes(dataType.value) }"
           >
-            <span class="data-type-card__icon"></span>
+            <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
             <strong>{{ dataType.label }}</strong>
             <input
               v-model="selectedDataTypeCodes"
@@ -121,7 +121,7 @@
             { 'cloud-card--active': ownedCloudServerCodes.includes(cloudServer.value) }
           ]"
         >
-          <span class="cloud-card__icon"></span>
+          <SvgIcon class="permission-svg-icon" :icon-name="cloudServer.iconName" />
           <strong>{{ cloudServer.label }}</strong>
         </article>
       </div>
@@ -134,6 +134,7 @@
             :key="region.value"
             class="region-item region-item--owned"
           >
+            <SvgIcon class="permission-svg-icon" :icon-name="region.iconName" />
             {{ region.label }}
           </span>
         </div>
@@ -152,6 +153,7 @@
             class="region-item region-item--selectable"
             :class="{ 'region-item--selected': selectedRegionCodes.includes(region.value) }"
           >
+            <SvgIcon class="permission-svg-icon" :icon-name="region.iconName" />
             <input
               v-model="selectedRegionCodes"
               type="checkbox"
@@ -188,6 +190,7 @@
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Check } from "@element-plus/icons-vue";
+import SvgIcon from '@/components/SvgIcon.vue';
 import {
   allCxoCloudPermissionList,
   allCloudServerPermissionList,
@@ -588,14 +591,10 @@ watch(
   color: #253bc2;
 }
 
-.cloud-card__icon {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  background:
-    linear-gradient(90deg, transparent 46%, #40329c 46%, #40329c 54%, transparent 54%),
-    linear-gradient(0deg, transparent 46%, #40329c 46%, #40329c 54%, transparent 54%),
-    rgba(64, 50, 156, 0.12);
+.permission-svg-icon {
+  flex-shrink: 0;
+  color: #40329c;
+  fill: currentColor;
 }
 
 .data-type-grid {
@@ -623,14 +622,6 @@ watch(
 .data-type-card--owned {
   border-color: rgba(63, 92, 255, 0.28);
   background: rgba(247, 248, 255, 0.96);
-}
-
-.data-type-card__icon {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #40329c;
-  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.76);
 }
 
 .region-block {

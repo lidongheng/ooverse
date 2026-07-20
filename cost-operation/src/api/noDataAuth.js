@@ -116,18 +116,22 @@ const userAuthMock = {
         {
           permCode: "DATA_COST",
           permName: "成本",
+          approver: "张三 12345678",
         },
         {
           permCode: "DATA_EFFICIENCY",
           permName: "效率",
+          approver: "张三 12345678",
         },
         {
           permCode: "DATA_OPERATE",
           permName: "销毛",
+          approver: "张三 12345678",
         },
         {
           permCode: "DATA_REVENUE",
           permName: "流水",
+          approver: "张三 12345678",
         },
       ],
     },

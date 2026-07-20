@@ -15,42 +15,74 @@
       </el-tabs>
 
       <section v-if="activeStatus === 'owned'" class="owned-auth">
-        <div class="owned-section">
-          <h2 class="owned-section__title">云服务</h2>
-          <div class="owned-list">
-            <button
-              v-for="cloudServer in ownedCloudServers"
-              :key="cloudServer.code"
-              class="owned-card"
-              type="button"
-            >
-              <span class="owned-card__name">
-                <FourGridIcon />
-                {{ isCxoRoleSelected ? cloudServer.name : cloudServer.code }}
-              </span>
-              <span class="owned-card__meta" />
-            </button>
+        <div v-if="isCxoRoleSelected" class="cxo-owned-auth">
+          <el-table
+            :data="ownedCxoTableRows"
+            :span-method="getCxoOwnedSpanMethod"
+            border
+            class="cxo-owned-table"
+          >
+            <el-table-column prop="cloudServerName" label="云服务">
+              <template #default="scope">
+                <span class="owned-card__name">
+                  <FourGridIcon />
+                  {{ scope.row.cloudServerName }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="dataTypeName" label="数据类型">
+              <template #default="scope">
+                <span class="owned-card__name">
+                  <FourGridIcon />
+                  {{ scope.row.dataTypeName }}
+                </span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="cxo-owned-actions">
+            <el-button class="back-button" :loading="backLoading" @click="handleBack">
+              返回
+            </el-button>
           </div>
         </div>
 
-        <div class="owned-section">
-          <h2 class="owned-section__title">{{ secondaryPermissionLabel }}</h2>
-          <div class="owned-list owned-list--region">
-            <button
-              v-for="permission in ownedSecondaryPermissions"
-              :key="permission.code"
-              class="owned-card"
-              type="button"
-            >
-              <span class="owned-card__name">
-                <FourGridIcon />
-                {{ permission.name }}
-              </span>
-              <span class="owned-card__meta" />
-            </button>
+        <template v-else>
+          <div class="owned-section">
+            <h2 class="owned-section__title">云服务</h2>
+            <div class="owned-list">
+              <button
+                v-for="cloudServer in ownedCloudServers"
+                :key="cloudServer.code"
+                class="owned-card"
+                type="button"
+              >
+                <span class="owned-card__name">
+                  <FourGridIcon />
+                  {{ cloudServer.code }}
+                </span>
+                <span class="owned-card__meta" />
+              </button>
+            </div>
           </div>
-        </div>
 
+          <div class="owned-section">
+            <h2 class="owned-section__title">{{ secondaryPermissionLabel }}</h2>
+            <div class="owned-list owned-list--region">
+              <button
+                v-for="permission in ownedSecondaryPermissions"
+                :key="permission.code"
+                class="owned-card"
+                type="button"
+              >
+                <span class="owned-card__name">
+                  <FourGridIcon />
+                  {{ permission.name }}
+                </span>
+                <span class="owned-card__meta" />
+              </button>
+            </div>
+          </div>
+        </template>
       </section>
 
       <section v-else-if="activeStatus === 'approving'" class="approving-table">
@@ -117,7 +149,7 @@
                 <FourGridIcon />
                 {{ dataType.name }}
               </span>
-              <span class="resource-card__meta" />
+              <span class="resource-card__meta">审批人：{{ dataType.approver }}</span>
             </button>
           </div>
           <section v-if="!isCxoRoleSelected" class="region-panel">
@@ -286,6 +318,7 @@ const unownedRegionGroups = ref([]);
 const ownedCloudServers = ref([]);
 const ownedRegions = ref([]);
 const ownedDataTypes = ref([]);
+const ownedCxoTableRows = ref([]);
 const unownedDataTypes = ref([]);
 const approvingRows = ref([]);
 const submitLoading = ref(false);
@@ -375,6 +408,20 @@ const createRegionNameMap = (regionGroups) => {
   );
 };
 
+const getCxoOwnedSpanMethod = ({ row, columnIndex }) => {
+  if (columnIndex !== 0) {
+    return {
+      rowspan: 1,
+      colspan: 1,
+    };
+  }
+
+  return {
+    rowspan: row.cloudRowSpan,
+    colspan: row.cloudRowSpan > 0 ? 1 : 0,
+  };
+};
+
 const initializeDefaultSelection = () => {
   if (isCxoRoleSelected.value) {
     const selectedCxoCloudCodeSet = new Set(parseQueryCodes(route.query.cxoCloudCodes));
@@ -408,6 +455,7 @@ const loadOptions = async () => {
     ownedCloudServers.value = [];
     ownedRegions.value = [];
     ownedDataTypes.value = [];
+    ownedCxoTableRows.value = [];
     unownedDataTypes.value = [];
     openedGroups.value = [];
     return;
@@ -439,6 +487,21 @@ const loadOptions = async () => {
         name: item.permName,
         userName: optionData.dataTypeCodeMap[item.permCode][0].userName,
       }));
+    ownedCxoTableRows.value = cloudServerDimension.detailList
+      .filter((item) => ownedCxoCloudCodeSet.has(item.permCode))
+      .flatMap((item) => {
+        const dataTypeList = optionData.dataTypeCodeMap[item.permCode];
+        const tableRows = dataTypeList.map((dataType) => ({
+          cloudServerCode: item.permCode,
+          cloudServerName: item.permName,
+          dataTypeCode: dataType.code,
+          dataTypeName: dataType.name,
+          cloudRowSpan: 0,
+        }));
+
+        tableRows[0].cloudRowSpan = dataTypeList.length;
+        return tableRows;
+      });
     unownedCloudServers.value = cloudServerDimension.detailList
       .filter((item) => !ownedCxoCloudCodeSet.has(item.permCode))
       .map((item) => ({ code: item.permCode, name: item.permName }));
@@ -447,7 +510,11 @@ const loadOptions = async () => {
       .map((item) => ({ code: item.permCode, name: item.permName }));
     unownedDataTypes.value = dataTypeDimension.detailList
       .filter((item) => !ownedDataTypeCodeSet.has(item.permCode))
-      .map((item) => ({ code: item.permCode, name: item.permName }));
+      .map((item) => ({
+        code: item.permCode,
+        name: item.permName,
+        approver: item.approver,
+      }));
     unownedRegionGroups.value = [];
     ownedRegions.value = [];
     openedGroups.value = [];
@@ -456,6 +523,7 @@ const loadOptions = async () => {
   }
 
   ownedDataTypes.value = [];
+  ownedCxoTableRows.value = [];
   unownedDataTypes.value = [];
   // geoTree 父节点只作为展开分组标题，Region 卡片展示子节点完整名称。
   const regionNameMap = createRegionNameMap(optionData.geoTree);
@@ -740,6 +808,35 @@ watch(selectedRoleValue, async () => {
 
 .owned-auth {
   padding-bottom: 28px;
+}
+
+.cxo-owned-table {
+  width: 100%;
+  background: transparent;
+}
+
+.cxo-owned-table :deep(.el-table__header th) {
+  height: 48px;
+  color: #515873;
+  background: #f3f5fb;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cxo-owned-table :deep(.el-table__body td) {
+  height: 60px;
+  color: #3c4264;
+  background: #fff;
+}
+
+.cxo-owned-table :deep(.cell) {
+  padding: 0 18px;
+}
+
+.cxo-owned-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 32px;
 }
 
 .owned-section + .owned-section {
