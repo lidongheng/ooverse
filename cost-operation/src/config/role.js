@@ -66,8 +66,10 @@ export const allRegionPermissionList = reactive([]);
 export const allCloudServerPermissionList = reactive([]);
 export const allCxoCloudPermissionList = reactive([]);
 export const allDataTypePermissionList = reactive([]);
-export const cxoCloudServerPermissionList = reactive([]);
-export const cxoDataTypePermissionList = reactive([]);
+export const cxoDataTypePermissionMap = reactive({
+  CXO_CLOUD_GENERAL_COMPUTING: [],
+  CXO_CLOUD_NPU: [],
+});
 export const rolePermissionList = reactive([]);
 export const regionPermissionList = reactive([]);
 export const cloudServerPermissionList = reactive([]);
@@ -79,6 +81,7 @@ function createPermissionItems(detailList) {
       label: item.permName,
       value: item.permCode,
       code: item.permCode,
+      approver: item.approver,
       iconName: PERMISSION_ICON_NAME_MAP[item.permCode],
     };
   });
@@ -109,8 +112,14 @@ function clearFrontSalesPermissionState() {
 function clearCxoPermissionState() {
   allCxoCloudPermissionList.splice(0, allCxoCloudPermissionList.length);
   allDataTypePermissionList.splice(0, allDataTypePermissionList.length);
-  cxoCloudServerPermissionList.splice(0, cxoCloudServerPermissionList.length);
-  cxoDataTypePermissionList.splice(0, cxoDataTypePermissionList.length);
+  cxoDataTypePermissionMap.CXO_CLOUD_GENERAL_COMPUTING.splice(
+    0,
+    cxoDataTypePermissionMap.CXO_CLOUD_GENERAL_COMPUTING.length,
+  );
+  cxoDataTypePermissionMap.CXO_CLOUD_NPU.splice(
+    0,
+    cxoDataTypePermissionMap.CXO_CLOUD_NPU.length,
+  );
 }
 
 export function initializePermissionConfig(data, roleValue) {
@@ -161,15 +170,15 @@ export function initializePermissionConfig(data, roleValue) {
       allCxoCloudPermissionList.length,
       ...createPermissionItems(cxoCloudDimension.detailList),
     );
-    cxoCloudServerPermissionList.splice(
+    cxoDataTypePermissionMap.CXO_CLOUD_GENERAL_COMPUTING.splice(
       0,
-      cxoCloudServerPermissionList.length,
-      ...data.cloudServerNameList,
+      cxoDataTypePermissionMap.CXO_CLOUD_GENERAL_COMPUTING.length,
+      ...data.dataTypeCodeMap.CXO_CLOUD_GENERAL_COMPUTING,
     );
-    cxoDataTypePermissionList.splice(
+    cxoDataTypePermissionMap.CXO_CLOUD_NPU.splice(
       0,
-      cxoDataTypePermissionList.length,
-      ...data.dataTypeCodeList,
+      cxoDataTypePermissionMap.CXO_CLOUD_NPU.length,
+      ...data.dataTypeCodeMap.CXO_CLOUD_NPU,
     );
     return;
   }
@@ -211,7 +220,8 @@ export function isCxoRole(roleValue) {
 
 export function hasDataPermission(roleValue) {
   if (isCxoRole(roleValue)) {
-    return cxoCloudServerPermissionList.length > 0 || cxoDataTypePermissionList.length > 0;
+    return cxoDataTypePermissionMap.CXO_CLOUD_GENERAL_COMPUTING.length > 0
+      || cxoDataTypePermissionMap.CXO_CLOUD_NPU.length > 0;
   }
 
   return regionPermissionList.length > 0 || cloudServerPermissionList.length > 0;

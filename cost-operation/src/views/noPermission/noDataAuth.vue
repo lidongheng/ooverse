@@ -104,55 +104,74 @@
         class="apply-form"
         label-position="top"
       >
-        <el-form-item prop="cloudServerCodes" :required="!isCxoRoleSelected">
-          <template #label>
-            <span class="form-item-title">
-              <span>云服务</span>
-              <span class="form-item-title__meta">审批人：{{ cloudServerApprover }}</span>
-            </span>
-          </template>
-          <div class="service-grid">
-            <button
-              v-for="cloudServer in unownedCloudServers"
-              :key="cloudServer.code"
-              class="resource-card"
-              :class="{ 'resource-card--active': form.cloudServerCodes.includes(cloudServer.code) }"
-              type="button"
-              @click="toggleCloudServer(cloudServer.code)"
+        <div v-if="isCxoRoleSelected" class="cxo-application-groups">
+          <section
+            v-for="group in cxoApplicationGroups"
+            :key="group.value"
+            class="cxo-application-group"
+          >
+            <el-checkbox
+              class="cxo-application-group__select-all"
+              :model-value="isCxoApplicationGroupAllSelected(group)"
+              :indeterminate="isCxoApplicationGroupIndeterminate(group)"
+              @change="toggleCxoApplicationGroup(group)"
             >
-              <span class="resource-card__name">
-                <span class="resource-card__checkbox" aria-hidden="true" />
-                <FourGridIcon />
-                {{ isCxoRoleSelected ? cloudServer.name : cloudServer.code }}
-              </span>
-              <span class="resource-card__meta" />
-            </button>
-          </div>
-        </el-form-item>
+              {{ group.label }}
+            </el-checkbox>
+            <div class="service-grid">
+              <button
+                v-for="dataType in group.dataTypes"
+                :key="dataType.value"
+                class="resource-card"
+                :class="{
+                  'resource-card--active': form.cxoPermissionMap[group.value]
+                    .includes(dataType.value)
+                }"
+                type="button"
+                @click="toggleCxoDataType(group.value, dataType.value)"
+              >
+                <span class="resource-card__name">
+                  <span class="resource-card__checkbox" aria-hidden="true" />
+                  <FourGridIcon />
+                  {{ dataType.label }}
+                </span>
+                <span class="resource-card__meta">审批人：{{ dataType.approver }}</span>
+              </button>
+            </div>
+          </section>
+        </div>
 
-        <el-form-item
-          :label="secondaryPermissionLabel"
-          :prop="secondaryPermissionField"
-          :required="!isCxoRoleSelected"
-        >
-          <div v-if="isCxoRoleSelected" class="service-grid">
-            <button
-              v-for="dataType in unownedDataTypes"
-              :key="dataType.code"
-              class="resource-card"
-              :class="{ 'resource-card--active': form.dataTypeCodes.includes(dataType.code) }"
-              type="button"
-              @click="toggleDataType(dataType.code)"
-            >
-              <span class="resource-card__name">
-                <span class="resource-card__checkbox" aria-hidden="true" />
-                <FourGridIcon />
-                {{ dataType.name }}
+        <template v-else>
+          <el-form-item prop="cloudServerCodes" required>
+            <template #label>
+              <span class="form-item-title">
+                <span>云服务</span>
+                <span class="form-item-title__meta">审批人：{{ cloudServerApprover }}</span>
               </span>
-              <span class="resource-card__meta">审批人：{{ dataType.approver }}</span>
-            </button>
-          </div>
-          <section v-if="!isCxoRoleSelected" class="region-panel">
+            </template>
+            <div class="service-grid">
+              <button
+                v-for="cloudServer in unownedCloudServers"
+                :key="cloudServer.code"
+                class="resource-card"
+                :class="{
+                  'resource-card--active': form.cloudServerCodes.includes(cloudServer.code)
+                }"
+                type="button"
+                @click="toggleCloudServer(cloudServer.code)"
+              >
+                <span class="resource-card__name">
+                  <span class="resource-card__checkbox" aria-hidden="true" />
+                  <FourGridIcon />
+                  {{ cloudServer.code }}
+                </span>
+                <span class="resource-card__meta" />
+              </button>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="Region" prop="regionCodes" required>
+            <section class="region-panel">
             <div class="region-toolbar">
               <label class="region-toolbar__label">大区</label>
               <el-select v-model="areaFilter" class="region-toolbar__select" @change="handleAreaChange">
@@ -245,8 +264,9 @@
                 </div>
               </div>
             </el-scrollbar>
-          </section>
-        </el-form-item>
+            </section>
+          </el-form-item>
+        </template>
 
         <el-form-item label="申请原因" prop="reason" required>
           <div class="reason-input">
@@ -284,6 +304,9 @@ import {
 } from "@/api/noDataAuth";
 import { getPermissionConfig } from '@/api/role';
 import {
+  allCxoCloudPermissionList,
+  allDataTypePermissionList,
+  cxoDataTypePermissionMap,
   getCurrentRoleRequestConfig,
   initializePermissionConfig,
   isCxoRole,
@@ -317,19 +340,20 @@ const unownedCloudServers = ref([]);
 const unownedRegionGroups = ref([]);
 const ownedCloudServers = ref([]);
 const ownedRegions = ref([]);
-const ownedDataTypes = ref([]);
-const carriedOwnedDataTypeCodes = ref([]);
 const ownedCxoTableRows = ref([]);
-const unownedDataTypes = ref([]);
 const approvingRows = ref([]);
 const submitLoading = ref(false);
 const backLoading = ref(false);
 const SAFE_ROLE_SELECT_PATH = '/roleSelect?fromUnauthorized=1';
+let optionRequestId = 0;
 
 const form = reactive({
   cloudServerCodes: [],
   regionCodes: [],
-  dataTypeCodes: [],
+  cxoPermissionMap: {
+    CXO_CLOUD_GENERAL_COMPUTING: [],
+    CXO_CLOUD_NPU: [],
+  },
   reason: "",
 });
 
@@ -353,16 +377,25 @@ const rules = computed(() => {
   };
 });
 const secondaryPermissionLabel = computed(() => {
-  return isCxoRoleSelected.value ? '数据类型' : 'Region';
-});
-const secondaryPermissionField = computed(() => {
-  return isCxoRoleSelected.value ? 'dataTypeCodes' : 'regionCodes';
+  return 'Region';
 });
 const permissionTooltip = computed(() => {
-  return `可选择云服务和 ${secondaryPermissionLabel.value} 后发起权限申请`;
+  if (isCxoRoleSelected.value) {
+    return '可按云服务选择数据类型后发起权限申请';
+  }
+
+  return '可选择云服务和 Region 后发起权限申请';
 });
 const ownedSecondaryPermissions = computed(() => {
-  return isCxoRoleSelected.value ? ownedDataTypes.value : ownedRegions.value;
+  return ownedRegions.value;
+});
+const cxoApplicationGroups = computed(() => {
+  return allCxoCloudPermissionList.map((cloudServer) => {
+    return {
+      ...cloudServer,
+      dataTypes: allDataTypePermissionList,
+    };
+  });
 });
 const isAllRegionsChecked = computed(() =>
   allRegionCodes.value.length > 0
@@ -407,6 +440,21 @@ const parseQueryCodes = (value) => {
   return String(value).split(",").filter(Boolean);
 };
 
+const parseCxoPermissionMap = (value) => {
+  if (value === undefined) {
+    return {
+      CXO_CLOUD_GENERAL_COMPUTING: [],
+      CXO_CLOUD_NPU: [],
+    };
+  }
+
+  const permissionMap = JSON.parse(value);
+  return {
+    CXO_CLOUD_GENERAL_COMPUTING: permissionMap.CXO_CLOUD_GENERAL_COMPUTING,
+    CXO_CLOUD_NPU: permissionMap.CXO_CLOUD_NPU,
+  };
+};
+
 const createRegionNameMap = (regionGroups) => {
   return new Map(
     regionGroups.flatMap((group) => {
@@ -429,60 +477,49 @@ const getCxoOwnedSpanMethod = ({ row, columnIndex }) => {
   };
 };
 
-const createCxoOwnedTableRows = (cloudServerList, dataTypeList) => {
-  if (cloudServerList.length > 0 && dataTypeList.length > 0) {
-    return cloudServerList.flatMap((cloudServer) => {
-      const tableRows = dataTypeList.map((dataType) => ({
-        cloudServerCode: cloudServer.code,
-        cloudServerName: cloudServer.name,
-        dataTypeCode: dataType.code,
-        dataTypeName: dataType.name,
-        cloudRowSpan: 0,
-      }));
-
-      tableRows[0].cloudRowSpan = dataTypeList.length;
-      return tableRows;
+const createCxoOwnedTableRows = (cloudServerList, dataTypeList, dataTypePermissionMap) => {
+  return cloudServerList.flatMap((cloudServer) => {
+    const ownedDataTypeCodeSet = new Set(
+      dataTypePermissionMap[cloudServer.value].map((dataType) => dataType.code)
+    );
+    const ownedDataTypes = dataTypeList.filter((dataType) => {
+      return ownedDataTypeCodeSet.has(dataType.value);
     });
-  }
 
-  if (cloudServerList.length > 0) {
-    return cloudServerList.map((cloudServer) => ({
-      cloudServerCode: cloudServer.code,
-      cloudServerName: cloudServer.name,
-      dataTypeCode: null,
-      dataTypeName: null,
-      cloudRowSpan: 1,
-    }));
-  }
+    if (ownedDataTypes.length === 0) {
+      return [];
+    }
 
-  return dataTypeList.map((dataType) => ({
-    cloudServerCode: null,
-    cloudServerName: null,
-    dataTypeCode: dataType.code,
-    dataTypeName: dataType.name,
-    cloudRowSpan: 1,
-  }));
+    return ownedDataTypes.map((dataType, index) => {
+      return {
+        cloudServerCode: cloudServer.code,
+        cloudServerName: cloudServer.label,
+        dataTypeCode: dataType.code,
+        dataTypeName: dataType.label,
+        cloudRowSpan: index === 0 ? ownedDataTypes.length : 0,
+      };
+    });
+  });
 };
 
 const initializeDefaultSelection = () => {
   if (isCxoRoleSelected.value) {
-    const selectedCxoCloudCodeSet = new Set(parseQueryCodes(route.query.cxoCloudCodes));
-    const selectedDataTypeCodeSet = new Set(parseQueryCodes(route.query.dataTypeCodes));
+    const selectedPermissionMap = parseCxoPermissionMap(route.query.cxoPermissionMap);
+    const allDataTypeCodes = allDataTypePermissionList.map((dataType) => dataType.code);
 
-    form.cloudServerCodes = unownedCloudServers.value
-      .map((cloudServer) => cloudServer.code)
-      .filter((code) => selectedCxoCloudCodeSet.has(code));
-    form.dataTypeCodes = unownedDataTypes.value
-      .map((dataType) => dataType.code)
-      .filter((code) => selectedDataTypeCodeSet.has(code));
-    carriedOwnedDataTypeCodes.value = ownedDataTypes.value
-      .map((dataType) => dataType.code)
-      .filter((code) => selectedDataTypeCodeSet.has(code));
+    form.cxoPermissionMap.CXO_CLOUD_GENERAL_COMPUTING = allDataTypeCodes.filter((code) => {
+      return selectedPermissionMap.CXO_CLOUD_GENERAL_COMPUTING.includes(code);
+    });
+    form.cxoPermissionMap.CXO_CLOUD_NPU = allDataTypeCodes.filter((code) => {
+      return selectedPermissionMap.CXO_CLOUD_NPU.includes(code);
+    });
+    form.cloudServerCodes = [];
     form.regionCodes = [];
     return;
   }
 
-  carriedOwnedDataTypeCodes.value = [];
+  form.cxoPermissionMap.CXO_CLOUD_GENERAL_COMPUTING = [];
+  form.cxoPermissionMap.CXO_CLOUD_NPU = [];
   const selectedRegionCodeSet = new Set(parseQueryCodes(route.query.regionCodes));
 
   // 从权限卡片跳转过来时，用 regionCode 与申请页可申请 Region 做匹配。
@@ -491,8 +528,23 @@ const initializeDefaultSelection = () => {
 };
 
 const loadOptions = async () => {
-  const response = await getNoDataAuthOptions(getCurrentRoleRequestConfig());
+  const requestId = ++optionRequestId;
+  const requestedRoleValue = selectedRoleValue.value;
+  const isCxoRequest = isCxoRole(requestedRoleValue);
+  const requestConfig = getCurrentRoleRequestConfig();
+  const optionRequest = getNoDataAuthOptions(requestConfig);
+  let permissionRequest;
+
+  if (isCxoRequest) {
+    permissionRequest = getPermissionConfig(requestConfig);
+  }
+
+  const response = await optionRequest;
   const optionData = response.data;
+
+  if (requestId !== optionRequestId) {
+    return;
+  }
 
   if (optionData === null || Array.isArray(optionData)) {
     // 后端业务状态异常时 HTTP 仍为 200，页面按空权限数据展示。
@@ -500,57 +552,44 @@ const loadOptions = async () => {
     unownedRegionGroups.value = [];
     ownedCloudServers.value = [];
     ownedRegions.value = [];
-    ownedDataTypes.value = [];
-    carriedOwnedDataTypeCodes.value = [];
     ownedCxoTableRows.value = [];
-    unownedDataTypes.value = [];
     openedGroups.value = [];
     return;
   }
 
-  const cloudServerDimensionCode = isCxoRoleSelected.value ? '6' : '4';
-  const cloudServerDimension = optionData.totalDimenPermConfigList.find(
-    (dimension) => dimension.permDimenTypeCode === cloudServerDimensionCode
-  );
+  if (isCxoRequest) {
+    const permissionResponse = await permissionRequest;
+    const permissionData = permissionResponse.data;
 
-  if (isCxoRoleSelected.value) {
-    const dataTypeDimension = optionData.totalDimenPermConfigList.find(
-      (dimension) => dimension.permDimenTypeCode === '3'
-    );
-    const ownedCxoCloudCodeSet = new Set(
-      optionData.cloudServerNameList.map((cloudServer) => cloudServer.code)
-    );
-    const ownedDataTypeCodeSet = new Set(
-      optionData.dataTypeCodeList.map((dataType) => dataType.code)
-    );
+    if (requestId !== optionRequestId) {
+      return;
+    }
 
-    ownedCloudServers.value = optionData.cloudServerNameList;
-    ownedDataTypes.value = optionData.dataTypeCodeList;
+    if (permissionData === null || Array.isArray(permissionData)) {
+      initializePermissionConfig(permissionData, requestedRoleValue);
+      ownedCxoTableRows.value = [];
+      return;
+    }
+
+    initializePermissionConfig(permissionData, requestedRoleValue);
     ownedCxoTableRows.value = createCxoOwnedTableRows(
-      optionData.cloudServerNameList,
-      optionData.dataTypeCodeList
+      allCxoCloudPermissionList,
+      allDataTypePermissionList,
+      cxoDataTypePermissionMap
     );
-    unownedCloudServers.value = cloudServerDimension.detailList
-      .filter((item) => !ownedCxoCloudCodeSet.has(item.permCode))
-      .map((item) => ({ code: item.permCode, name: item.permName }));
-    unownedDataTypes.value = dataTypeDimension.detailList
-      .filter((item) => !ownedDataTypeCodeSet.has(item.permCode))
-      .map((item) => ({
-        code: item.permCode,
-        name: item.permName,
-        approver: item.approver,
-      }));
+    unownedCloudServers.value = [];
     unownedRegionGroups.value = [];
+    ownedCloudServers.value = [];
     ownedRegions.value = [];
     openedGroups.value = [];
     initializeDefaultSelection();
     return;
   }
 
-  ownedDataTypes.value = [];
-  carriedOwnedDataTypeCodes.value = [];
   ownedCxoTableRows.value = [];
-  unownedDataTypes.value = [];
+  const cloudServerDimension = optionData.totalDimenPermConfigList.find(
+    (dimension) => dimension.permDimenTypeCode === '4'
+  );
   // geoTree 父节点只作为展开分组标题，Region 卡片展示子节点完整名称。
   const regionNameMap = createRegionNameMap(optionData.geoTree);
 
@@ -603,9 +642,37 @@ const toggleRegion = (code) => {
   validateField("regionCodes");
 };
 
-const toggleDataType = (code) => {
-  form.dataTypeCodes = toggleById(form.dataTypeCodes, code);
-  validateField("dataTypeCodes");
+const isCxoApplicationGroupAllSelected = (group) => {
+  return group.dataTypes.length > 0
+    && group.dataTypes.every((dataType) => {
+      return form.cxoPermissionMap[group.value].includes(dataType.value);
+    });
+};
+
+const isCxoApplicationGroupIndeterminate = (group) => {
+  const selectedCount = group.dataTypes.filter((dataType) => {
+    return form.cxoPermissionMap[group.value].includes(dataType.value);
+  }).length;
+
+  return selectedCount > 0 && selectedCount < group.dataTypes.length;
+};
+
+const toggleCxoApplicationGroup = (group) => {
+  if (isCxoApplicationGroupAllSelected(group)) {
+    form.cxoPermissionMap[group.value] = [];
+    return;
+  }
+
+  form.cxoPermissionMap[group.value] = group.dataTypes.map((dataType) => {
+    return dataType.value;
+  });
+};
+
+const toggleCxoDataType = (cloudServerCode, dataTypeCode) => {
+  form.cxoPermissionMap[cloudServerCode] = toggleById(
+    form.cxoPermissionMap[cloudServerCode],
+    dataTypeCode,
+  );
 };
 
 const getRegionGroupCodes = (group) => group.children.map((region) => region.code);
@@ -665,20 +732,37 @@ const handleKeywordChange = () => {
 const resetForm = () => {
   form.cloudServerCodes = [];
   form.regionCodes = [];
-  form.dataTypeCodes = [];
-  carriedOwnedDataTypeCodes.value = [];
+  form.cxoPermissionMap.CXO_CLOUD_GENERAL_COMPUTING = [];
+  form.cxoPermissionMap.CXO_CLOUD_NPU = [];
   form.reason = "";
   formRef.value.clearValidate();
 };
 
+const createCxoDataRoleList = () => {
+  return allCxoCloudPermissionList.flatMap((cloudServer) => {
+    return allDataTypePermissionList
+      .filter((dataType) => {
+        return form.cxoPermissionMap[cloudServer.value].includes(dataType.value);
+      })
+      .map((dataType) => {
+        return {
+          cloudServerCode: cloudServer.value,
+          dataTypeCode: dataType.value,
+          validityPeriod: '2027-10-31',
+        };
+      });
+  });
+};
+
 const handleSubmit = async () => {
-  if (
-    isCxoRoleSelected.value
-    && form.cloudServerCodes.length === 0
-    && form.dataTypeCodes.length === 0
-  ) {
-    ElMessage.warning("请选择云服务或数据类型");
-    return;
+  if (isCxoRoleSelected.value) {
+    const hasSelectedPermission = Object.values(form.cxoPermissionMap)
+      .some((dataTypeCodes) => dataTypeCodes.length > 0);
+
+    if (!hasSelectedPermission) {
+      ElMessage.warning('请至少选择一个云服务下的数据类型');
+      return;
+    }
   }
 
   try {
@@ -690,25 +774,24 @@ const handleSubmit = async () => {
   submitLoading.value = true;
 
   try {
-    let secondaryPermissionCodes = form.regionCodes;
+    let dataRoleList;
     if (isCxoRoleSelected.value) {
-      secondaryPermissionCodes = carriedOwnedDataTypeCodes.value;
-      if (form.dataTypeCodes.length > 0) {
-        secondaryPermissionCodes = form.dataTypeCodes;
-      }
+      dataRoleList = createCxoDataRoleList();
+    } else {
+      dataRoleList = [
+        ...form.cloudServerCodes,
+        ...form.regionCodes,
+      ].map((dataRoleId) => ({
+        dataRoleId,
+        validityPeriod: '2027-10-31',
+      }));
     }
 
     const payload = {
       userId: "12345678",
       tenant: "",
       description: form.reason,
-      dataRoleList: [
-        ...form.cloudServerCodes,
-        ...secondaryPermissionCodes,
-      ].map((dataRoleId) => ({
-        dataRoleId,
-        validityPeriod: "2027-10-31",
-      })),
+      dataRoleList,
     };
 
     await createNoDataAuth(payload, getCurrentRoleRequestConfig());
@@ -836,6 +919,26 @@ watch(selectedRoleValue, async () => {
 
 .apply-form {
   padding-bottom: 28px;
+}
+
+.cxo-application-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.cxo-application-group__select-all {
+  margin-bottom: 14px;
+  color: #353b5c;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cxo-application-group__select-all :deep(.el-checkbox__label) {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .form-item-title {
