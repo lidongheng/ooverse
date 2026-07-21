@@ -318,6 +318,7 @@ const unownedRegionGroups = ref([]);
 const ownedCloudServers = ref([]);
 const ownedRegions = ref([]);
 const ownedDataTypes = ref([]);
+const carriedOwnedDataTypeCodes = ref([]);
 const ownedCxoTableRows = ref([]);
 const unownedDataTypes = ref([]);
 const approvingRows = ref([]);
@@ -474,10 +475,14 @@ const initializeDefaultSelection = () => {
     form.dataTypeCodes = unownedDataTypes.value
       .map((dataType) => dataType.code)
       .filter((code) => selectedDataTypeCodeSet.has(code));
+    carriedOwnedDataTypeCodes.value = ownedDataTypes.value
+      .map((dataType) => dataType.code)
+      .filter((code) => selectedDataTypeCodeSet.has(code));
     form.regionCodes = [];
     return;
   }
 
+  carriedOwnedDataTypeCodes.value = [];
   const selectedRegionCodeSet = new Set(parseQueryCodes(route.query.regionCodes));
 
   // 从权限卡片跳转过来时，用 regionCode 与申请页可申请 Region 做匹配。
@@ -496,6 +501,7 @@ const loadOptions = async () => {
     ownedCloudServers.value = [];
     ownedRegions.value = [];
     ownedDataTypes.value = [];
+    carriedOwnedDataTypeCodes.value = [];
     ownedCxoTableRows.value = [];
     unownedDataTypes.value = [];
     openedGroups.value = [];
@@ -542,6 +548,7 @@ const loadOptions = async () => {
   }
 
   ownedDataTypes.value = [];
+  carriedOwnedDataTypeCodes.value = [];
   ownedCxoTableRows.value = [];
   unownedDataTypes.value = [];
   // geoTree 父节点只作为展开分组标题，Region 卡片展示子节点完整名称。
@@ -659,6 +666,7 @@ const resetForm = () => {
   form.cloudServerCodes = [];
   form.regionCodes = [];
   form.dataTypeCodes = [];
+  carriedOwnedDataTypeCodes.value = [];
   form.reason = "";
   formRef.value.clearValidate();
 };
@@ -682,13 +690,21 @@ const handleSubmit = async () => {
   submitLoading.value = true;
 
   try {
+    let secondaryPermissionCodes = form.regionCodes;
+    if (isCxoRoleSelected.value) {
+      secondaryPermissionCodes = carriedOwnedDataTypeCodes.value;
+      if (form.dataTypeCodes.length > 0) {
+        secondaryPermissionCodes = form.dataTypeCodes;
+      }
+    }
+
     const payload = {
       userId: "12345678",
       tenant: "",
       description: form.reason,
       dataRoleList: [
         ...form.cloudServerCodes,
-        ...(isCxoRoleSelected.value ? form.dataTypeCodes : form.regionCodes),
+        ...secondaryPermissionCodes,
       ].map((dataRoleId) => ({
         dataRoleId,
         validityPeriod: "2027-10-31",

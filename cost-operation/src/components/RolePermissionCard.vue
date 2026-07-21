@@ -336,14 +336,27 @@ const getReturnQuery = () => {
   return returnQuery;
 };
 
+const getCxoDataTypeCodesForApply = () => {
+  if (selectedDataTypeCodes.value.length > 0) {
+    return selectedDataTypeCodes.value;
+  }
+
+  if (selectedCxoCloudCodes.value.length > 0) {
+    // 仅申请云服务时携带当前已拥有的数据类型，避免下游按无数据类型工单自动审批。
+    return ownedDataTypeCodes.value;
+  }
+
+  return [];
+};
+
 const handlePermissionApply = () => {
   if (isCxoRoleSelected.value) {
     router.push({
       path: "/Unauthorized",
       query: {
         ...getReturnQuery(),
-        cxoCloudCodes: selectedCxoCloudCodes.value.join(","),
-        dataTypeCodes: selectedDataTypeCodes.value.join(","),
+        cxoCloudCodes: selectedCxoCloudCodes.value.join(','),
+        dataTypeCodes: getCxoDataTypeCodesForApply().join(','),
       },
     });
     return;
