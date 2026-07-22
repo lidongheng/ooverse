@@ -32,65 +32,72 @@
     <section v-if="isCxoRoleSelected" class="permission-section">
       <h2>数据权限</h2>
 
-      <div class="cxo-permission-block cxo-permission-block--owned">
-        <h3 class="cxo-permission-title">已拥有</h3>
-        <p class="permission-summary">{{ ownedCxoPermissionSummary }}</p>
-        <div
+      <p class="section-label">云服务</p>
+      <div class="cloud-list cxo-cloud-list">
+        <article
           v-for="group in cxoPermissionGroups"
-          v-show="group.ownedDataTypes.length > 0"
-          :key="`owned-${group.value}`"
-          class="cxo-permission-row"
+          :key="group.value"
+          :class="[
+            'cloud-card',
+            { 'cloud-card--active': group.ownedDataTypes.length > 0 }
+          ]"
         >
-          <strong class="cxo-permission-row__label">{{ group.label }}</strong>
-          <div class="data-type-grid">
-            <article
-              v-for="dataType in group.ownedDataTypes"
-              :key="dataType.value"
-              class="data-type-card data-type-card--owned"
-            >
-              <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
-              <strong>{{ dataType.label }}</strong>
-            </article>
-          </div>
-        </div>
+          <SvgIcon class="permission-svg-icon" :icon-name="group.iconName" />
+          <strong>{{ group.label }}</strong>
+        </article>
       </div>
 
-      <div class="cxo-permission-block cxo-permission-block--unowned">
-        <h3 class="cxo-permission-title">未拥有</h3>
-        <p class="permission-summary">{{ unownedCxoPermissionSummary }}</p>
-        <p class="cxo-permission-tip">勾选下方数据类型申请数据权限，可直接跳转到权限申请页面</p>
+      <div class="cxo-data-type-block">
+        <p class="section-label">数据类型</p>
+        <div class="permission-status cxo-permission-status">
+          <p>已拥有数据类型权限数量：{{ ownedCxoPermissionCount }}个</p>
+          <p>已选择数据类型数量：{{ selectedCxoPermissionCount }}个</p>
+        </div>
+        <p class="cxo-permission-tip">勾选未拥有的数据类型申请数据权限</p>
         <div
           v-for="group in cxoPermissionGroups"
-          v-show="group.unownedDataTypes.length > 0"
-          :key="`unowned-${group.value}`"
+          :key="group.value"
           class="cxo-permission-row"
         >
           <el-checkbox
             class="cxo-permission-row__select-all"
             :model-value="isCxoGroupAllSelected(group)"
             :indeterminate="isCxoGroupIndeterminate(group)"
+            :disabled="group.unownedDataTypes.length === 0"
             @change="toggleCxoGroup(group)"
           >
             {{ group.label }}
           </el-checkbox>
           <div class="data-type-grid">
-            <label
-              v-for="dataType in group.unownedDataTypes"
+            <template
+              v-for="dataType in group.dataTypes"
               :key="dataType.value"
-              class="data-type-card data-type-card--selectable"
-              :class="{
-                'data-type-card--selected': selectedCxoPermissionMap[group.value]
-                  .includes(dataType.value)
-              }"
             >
-              <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
-              <strong>{{ dataType.label }}</strong>
-              <input
-                v-model="selectedCxoPermissionMap[group.value]"
-                type="checkbox"
-                :value="dataType.value"
+              <article
+                v-if="dataType.owned"
+                class="data-type-card data-type-card--owned"
               >
-            </label>
+                <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
+                <strong>{{ dataType.label }}</strong>
+                <span class="data-type-card__status">已拥有</span>
+              </article>
+              <label
+                v-else
+                class="data-type-card data-type-card--selectable"
+                :class="{
+                  'data-type-card--selected': selectedCxoPermissionMap[group.value]
+                    .includes(dataType.value)
+                }"
+              >
+                <SvgIcon class="permission-svg-icon" :icon-name="dataType.iconName" />
+                <strong>{{ dataType.label }}</strong>
+                <input
+                  v-model="selectedCxoPermissionMap[group.value]"
+                  type="checkbox"
+                  :value="dataType.value"
+                >
+              </label>
+            </template>
           </div>
         </div>
       </div>
@@ -237,6 +244,12 @@ const cxoPermissionGroups = computed(() => {
 
     return {
       ...cloudServer,
+      dataTypes: allDataTypePermissionList.map((dataType) => {
+        return {
+          ...dataType,
+          owned: ownedDataTypeCodes.includes(dataType.value),
+        };
+      }),
       ownedDataTypes: allDataTypePermissionList.filter((dataType) => {
         return ownedDataTypeCodes.includes(dataType.value);
       }),
@@ -247,16 +260,16 @@ const cxoPermissionGroups = computed(() => {
   });
 });
 
-const ownedCxoPermissionSummary = computed(() => {
-  return cxoPermissionGroups.value.map((group) => {
-    return `“${group.label}”数据类型权限数量：${group.ownedDataTypes.length}个`;
-  }).join('，');
+const ownedCxoPermissionCount = computed(() => {
+  return cxoPermissionGroups.value.reduce((total, group) => {
+    return total + group.ownedDataTypes.length;
+  }, 0);
 });
 
-const unownedCxoPermissionSummary = computed(() => {
-  return cxoPermissionGroups.value.map((group) => {
-    return `“${group.label}”数据类型权限数量：${group.unownedDataTypes.length}个`;
-  }).join('，');
+const selectedCxoPermissionCount = computed(() => {
+  return Object.values(selectedCxoPermissionMap).reduce((total, dataTypeCodes) => {
+    return total + dataTypeCodes.length;
+  }, 0);
 });
 
 const showPermissionSection = computed(() => {
@@ -521,45 +534,37 @@ watch(
   font-weight: 700;
 }
 
-.section-label--data-type {
-  margin-top: 4px;
-}
-
-.permission-block {
-  flex-shrink: 0;
-}
-
-.permission-block--owned {
-  margin-bottom: 14px;
-}
-
-.permission-summary,
 .permission-status {
   margin: 0 0 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
   color: rgba(37, 34, 92, 0.72);
   font-size: 13px;
   line-height: 20px;
   font-weight: 700;
+
+  p {
+    margin: 0;
+  }
 }
 
-.cxo-permission-block {
-  flex-shrink: 0;
+.cxo-cloud-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
 }
 
-.cxo-permission-block--unowned {
-  margin-top: 18px;
+.cxo-data-type-block {
+  display: flex;
+  flex-direction: column;
 }
 
-.cxo-permission-title {
-  margin: 0 0 10px;
-  color: #2d2a63;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 800;
+.cxo-permission-status {
+  margin-bottom: 6px;
 }
 
 .cxo-permission-tip {
-  margin: -6px 0 12px;
+  margin: 0 0 8px;
   color: rgba(37, 34, 92, 0.58);
   font-size: 13px;
   line-height: 20px;
@@ -580,6 +585,7 @@ watch(
   }
 
   .data-type-card {
+    position: relative;
     gap: 4px;
     padding: 0 6px;
 
@@ -587,15 +593,6 @@ watch(
       white-space: nowrap;
     }
   }
-}
-
-.cxo-permission-row__label {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  color: #302c6b;
-  font-size: 14px;
-  line-height: 20px;
 }
 
 .cxo-permission-row__select-all {
@@ -607,15 +604,9 @@ watch(
     font-size: 14px;
     font-weight: 800;
   }
-}
 
-.permission-status {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-
-  p {
-    margin: 0;
+  :deep(.el-checkbox__input.is-disabled + .el-checkbox__label) {
+    color: #302c6b;
   }
 }
 
@@ -701,6 +692,15 @@ watch(
 .data-type-card--owned {
   border-color: rgba(63, 92, 255, 0.28);
   background: rgba(247, 248, 255, 0.96);
+}
+
+.data-type-card__status {
+  margin-left: auto;
+  color: rgba(48, 44, 107, 0.5);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .region-block {
@@ -902,27 +902,33 @@ watch(
     margin-bottom: 6px;
   }
 
-  .cxo-permission-block--unowned {
-    margin-top: 10px;
+  .cxo-cloud-list {
+    margin-bottom: 10px;
   }
 
-  .cxo-permission-title {
-    margin-bottom: 4px;
-    font-size: 14px;
-    line-height: 20px;
-  }
-
-  .permission-summary {
+  .cxo-data-type-block .section-label {
     margin-bottom: 5px;
+  }
+
+  .cxo-permission-status {
+    margin-bottom: 4px;
     line-height: 18px;
   }
 
   .cxo-permission-tip {
-    margin: -2px 0 6px;
+    margin: 0 0 5px;
     line-height: 18px;
   }
 
-  .cxo-permission-row__label,
+  .data-type-card__status {
+    position: absolute;
+    top: 1px;
+    right: 3px;
+    margin-left: 0;
+    font-size: 9px;
+    line-height: 12px;
+  }
+
   .cxo-permission-row__select-all {
     min-height: 36px;
   }
@@ -957,6 +963,10 @@ watch(
   .data-type-grid,
   .region-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cxo-cloud-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .cxo-permission-row {
