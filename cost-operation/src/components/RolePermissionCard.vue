@@ -387,11 +387,9 @@ watch(
 <style scoped lang="less">
 .role-permission-card {
   width: min(100%, 960px);
-  max-height: calc(100vh - 64px);
   padding: 34px 42px 30px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 20px 46px rgba(69, 65, 112, 0.16);
@@ -501,10 +499,6 @@ watch(
 }
 
 .permission-section {
-  min-height: 0;
-  flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
 
@@ -580,7 +574,18 @@ watch(
 
   .data-type-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    min-width: 0;
     margin-bottom: 0;
+  }
+
+  .data-type-card {
+    gap: 4px;
+    padding: 0 6px;
+
+    strong {
+      white-space: nowrap;
+    }
   }
 }
 
@@ -834,12 +839,11 @@ watch(
 .role-permission-card--compact {
   width: 520px;
   max-width: calc(100vw - 32px);
-  max-height: 620px;
   padding: 20px;
   border-radius: 8px;
 
   .card-header {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 
     h1 {
       font-size: 18px;
@@ -848,22 +852,23 @@ watch(
   }
 
   .role-list {
-    gap: 14px 22px;
-    margin-bottom: 22px;
+    gap: 10px 22px;
+    margin-bottom: 14px;
   }
 
   .role-option {
     width: 64px;
+    gap: 4px;
   }
 
   .role-avatar-wrap {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
   }
 
   .role-avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 
   .role-label,
@@ -884,10 +889,46 @@ watch(
 
   .cxo-permission-row {
     grid-template-columns: 104px minmax(0, 1fr);
+    margin-bottom: 6px;
 
-    .data-type-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .data-type-card {
+      height: 36px;
+      gap: 3px;
+      padding: 0 5px;
     }
+  }
+
+  .permission-section h2 {
+    margin-bottom: 6px;
+  }
+
+  .cxo-permission-block--unowned {
+    margin-top: 10px;
+  }
+
+  .cxo-permission-title {
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .permission-summary {
+    margin-bottom: 5px;
+    line-height: 18px;
+  }
+
+  .cxo-permission-tip {
+    margin: -2px 0 6px;
+    line-height: 18px;
+  }
+
+  .cxo-permission-row__label,
+  .cxo-permission-row__select-all {
+    min-height: 36px;
+  }
+
+  .action-row {
+    margin-top: 12px;
   }
 
   .region-grid {
@@ -923,7 +964,7 @@ watch(
     gap: 6px;
 
     .data-type-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
