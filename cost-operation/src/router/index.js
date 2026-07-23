@@ -18,6 +18,7 @@ import {
   authorizeRouteRole,
   canEnterRolePage,
   getRouteRole,
+  ROLE_PERMISSION_STATUS,
 } from '@/config/role'
 
 const routes = [
@@ -319,9 +320,14 @@ async function roleAccessGuard(to) {
   }
 
   try {
-    const roleAuthorized = await authorizeRouteRole(requiredRole)
+    const permissionStatus = await authorizeRouteRole(requiredRole)
 
-    if (!roleAuthorized) {
+    if (permissionStatus === ROLE_PERMISSION_STATUS.STALE) {
+      // 旧导航已被新的角色操作替代，只取消旧导航，不能误跳角色选择页。
+      return false
+    }
+
+    if (permissionStatus !== ROLE_PERMISSION_STATUS.AUTHORIZED) {
       return {
         path: '/roleSelect',
         query: {

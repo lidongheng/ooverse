@@ -54,6 +54,8 @@ import {
   ensureRolePermission,
   getRouteRole,
   getRoleTargetPath,
+  isRolePermissionAuthorized,
+  ROLE_PERMISSION_STATUS,
   roles,
   selectedRoleValue,
   syncSelectedRoleFromSession,
@@ -73,7 +75,7 @@ const rolePermissionGuideRef = ref(null);
 const permissionReturnTo = ref('');
 const permissionReturnRole = ref('');
 const roleCardPopoverStyle = ref({});
-let pendingPermissionRequest = Promise.resolve(true);
+let pendingPermissionRequest = Promise.resolve(ROLE_PERMISSION_STATUS.AUTHORIZED);
 
 const roleGuidePageKey = computed(() => {
   return ROLE_GUIDE_PAGE_KEY_MAP[route.name];
@@ -131,13 +133,13 @@ const closeRoleCard = (event) => {
 };
 
 const handleRoleSelection = (roleValue) => {
-  pendingPermissionRequest = changeSelectedRole(roleValue).catch(() => false);
+  pendingPermissionRequest = changeSelectedRole(roleValue);
 };
 
 const handleStart = async (roleValue) => {
-  const permissionReady = await pendingPermissionRequest;
+  const permissionStatus = await pendingPermissionRequest;
 
-  if (!permissionReady) {
+  if (!isRolePermissionAuthorized(permissionStatus)) {
     return;
   }
 
@@ -165,31 +167,15 @@ const initializeRoleMenuData = async () => {
     return;
   }
 
-  // 路由守卫通常已完成初始化；直接进入页面时 ensure 会补齐且复用同角色请求。
-  const permissionReady = await ensureRolePermission(routeRole);
-
-  if (!permissionReady) {
-    router.replace("/roleSelect");
-    return;
-  }
-
-  if (!canEnterRolePage(routeRole)) {
-    router.replace({
-      path: '/Unauthorized',
-      query: {
-        returnTo: '/roleSelect?fromUnauthorized=1',
-      },
-    });
-  }
+  // 页面准入只由路由守卫决定；这里仅复用权限状态，保证头像可以正常显示。
+  await ensureRolePermission(routeRole);
 };
 
 onMounted(() => {
   document.addEventListener("click", closeRoleCard);
   window.addEventListener('resize', updateRoleCardPosition);
   window.addEventListener('scroll', updateRoleCardPosition, true);
-  initializeRoleMenuData().catch(() => {
-    router.replace('/roleSelect');
-  });
+  initializeRoleMenuData();
 });
 
 onBeforeUnmount(() => {

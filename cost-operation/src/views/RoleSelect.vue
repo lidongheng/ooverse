@@ -19,6 +19,8 @@ import {
   ensureRoleCatalog,
   ensureRolePermission,
   getRoleTargetPath,
+  isRolePermissionAuthorized,
+  ROLE_PERMISSION_STATUS,
   rolePermissionList,
   selectedRoleValue,
 } from "@/config/role";
@@ -26,16 +28,16 @@ import {
 const route = useRoute();
 const router = useRouter();
 const showRoleSelector = ref(false);
-let pendingPermissionRequest = Promise.resolve(true);
+let pendingPermissionRequest = Promise.resolve(ROLE_PERMISSION_STATUS.AUTHORIZED);
 
 const handleRoleSelection = (roleValue) => {
-  pendingPermissionRequest = changeSelectedRole(roleValue).catch(() => false);
+  pendingPermissionRequest = changeSelectedRole(roleValue);
 };
 
 const handleStart = async (roleValue) => {
-  const permissionReady = await pendingPermissionRequest;
+  const permissionStatus = await pendingPermissionRequest;
 
-  if (!permissionReady) {
+  if (!isRolePermissionAuthorized(permissionStatus)) {
     return;
   }
 
@@ -69,8 +71,7 @@ onMounted(async () => {
     ) {
       // 从申请页返回或角色准入被拒绝时，只展示角色选择，不执行自动跳转。
       if (ownedRoleCodes.includes(selectedRoleValue.value)) {
-        pendingPermissionRequest = ensureRolePermission(selectedRoleValue.value)
-          .catch(() => false);
+        pendingPermissionRequest = ensureRolePermission(selectedRoleValue.value);
         await pendingPermissionRequest;
       }
 
@@ -80,17 +81,17 @@ onMounted(async () => {
 
     if (ownedRoleCodes.includes("ROLE_CXO")) {
       // 默认选中角色1后，按角色头重新获取对应的数据权限。
-      pendingPermissionRequest = changeSelectedRole("ROLE_CXO").catch(() => false);
+      pendingPermissionRequest = changeSelectedRole("ROLE_CXO");
       await pendingPermissionRequest;
       showRoleSelector.value = true;
       return;
     }
 
     if (ownedRoleCodes.length === 1 && ownedRoleCodes[0] === "ROLE_FRONT_SALES") {
-      pendingPermissionRequest = changeSelectedRole("ROLE_FRONT_SALES").catch(() => false);
-      const permissionReady = await pendingPermissionRequest;
+      pendingPermissionRequest = changeSelectedRole("ROLE_FRONT_SALES");
+      const permissionStatus = await pendingPermissionRequest;
 
-      if (!permissionReady) {
+      if (!isRolePermissionAuthorized(permissionStatus)) {
         showRoleSelector.value = true;
         return;
       }

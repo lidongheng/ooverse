@@ -88,6 +88,7 @@ const visualMapRange = ref(null);
 const chartEl = ref(null);
 let chart = null;
 let resizeObserver = null;
+let isUnmounted = false;
 
 // 拖拽偏移覆盖表：region name → { x, y }（未缩放基准值）
 const dragOverrides = ref(new Map());
@@ -596,24 +597,32 @@ function updateMap() {
 
 onMounted(async () => {
   if (!chartEl.value) return;
-  chart = echarts.init(chartEl.value);
+  isUnmounted = false;
+  const chartInstance = echarts.init(chartEl.value);
+  chart = chartInstance;
 
   // useRegionData 会监听全局日期；这里仅处理地图先挂载、数据还未回来时的首次补拉。
   if (!regionData.value.length) {
     await fetchRegionStats();
   }
+
+  // 异步请求期间组件可能已被路由卸载，不能继续注册已销毁图表的事件。
+  if (isUnmounted || chart !== chartInstance) {
+    return;
+  }
+
   updateMap();
   // 首次 setOption 后 geo 已初始化，convertToPixel 可用，再渲染一次以添加折线引导线
   updateMap();
 
   // 地图缩放/平移时重新计算引导线像素位置
-  chart.on('georoam', () => updateMap());
+  chartInstance.on('georoam', updateMap);
 
   // visualMap 拖动时同步过滤散点标签
-  chart.on("dataRangeSelected", (params) => {
+  chartInstance.on('dataRangeSelected', (params) => {
     const range =
       params?.batch?.[0]?.selected ??
-      chart.getOption()?.visualMap?.[0]?.range;
+      chartInstance.getOption()?.visualMap?.[0]?.range;
     if (Array.isArray(range) && range.length === 2) {
       visualMapRange.value = [range[0], range[1]];
       updateMap();
@@ -621,14 +630,14 @@ onMounted(async () => {
   });
 
   // 点击散点 → 右侧面板显示详情
-  chart.on("click", "series.scatter", (params) => {
+  chartInstance.on('click', 'series.scatter', (params) => {
     const item = regionData.value.find((r) => r.name === params.name);
     if (item) selectedRegion.value = item;
   });
 
   resizeObserver = new ResizeObserver(() => {
-    if (chart) {
-      chart.resize();
+    if (chart === chartInstance) {
+      chartInstance.resize();
       updateMap();
     }
   });
@@ -636,13 +645,18 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  isUnmounted = true;
+
   if (resizeObserver) {
     resizeObserver.disconnect();
     resizeObserver = null;
   }
-  if (chart) {
-    chart.dispose();
-    chart = null;
+
+  const chartInstance = chart;
+  chart = null;
+
+  if (chartInstance) {
+    chartInstance.dispose();
   }
 });
 </script>

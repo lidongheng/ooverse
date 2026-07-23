@@ -309,6 +309,7 @@ import {
   ensureRolePermission,
   getCurrentRoleRequestConfig,
   isCxoRole,
+  isRolePermissionAuthorized,
   restoreSelectedRole,
   ROLE_CODE_ORDER,
   selectedRoleValue,
@@ -557,13 +558,13 @@ const loadOptions = async () => {
   }
 
   if (isCxoRequest) {
-    const permissionReady = await permissionRequest;
+    const permissionStatus = await permissionRequest;
 
     if (requestId !== optionRequestId) {
       return;
     }
 
-    if (!permissionReady) {
+    if (!isRolePermissionAuthorized(permissionStatus)) {
       ownedCxoTableRows.value = [];
       return;
     }
@@ -843,9 +844,9 @@ const handleBack = async () => {
 
   try {
     if (returnContext.returnRole) {
-      const restored = await restoreSelectedRole(returnContext.returnRole);
+      const permissionStatus = await restoreSelectedRole(returnContext.returnRole);
 
-      if (!restored) {
+      if (!isRolePermissionAuthorized(permissionStatus)) {
         throw new Error('恢复原角色权限失败');
       }
     }

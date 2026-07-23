@@ -35,6 +35,13 @@ export const ROLE_ROUTE_CONFIG = {
   },
 };
 
+export const ROLE_PERMISSION_STATUS = Object.freeze({
+  AUTHORIZED: 'authorized',
+  UNAUTHORIZED: 'unauthorized',
+  STALE: 'stale',
+  ERROR: 'error',
+});
+
 // 权限图标由前端维护，后续只需要在这里补充对应的 SVG 图标名称。
 export const PERMISSION_ICON_NAME_MAP = {
   CLOUD_ECS: '',
@@ -355,7 +362,7 @@ async function loadRolePermission(roleValue, options) {
     if (selectedRoleValue.value !== roleValue) {
       saveSelectedRole(roleValue);
     }
-    return true;
+    return ROLE_PERMISSION_STATUS.AUTHORIZED;
   }
 
   if (activeRoleOperation && activeRoleOperation.roleValue === roleValue) {
@@ -373,27 +380,34 @@ async function loadRolePermission(roleValue, options) {
   const operationPromise = requestPermissionData(roleValue)
     .then((data) => {
       if (operationVersion !== roleOperationVersion) {
-        return false;
+        return ROLE_PERMISSION_STATUS.STALE;
       }
 
       if (!isPermissionDataValid(data)) {
         initializePermissionConfig(data, roleValue);
         roleCatalogLoaded = false;
         loadedRoleValue = undefined;
-        return false;
+        return ROLE_PERMISSION_STATUS.ERROR;
       }
 
       initializeRoleCatalog(data);
       roleCatalogLoaded = true;
 
       if (!ownsRole(data, roleValue)) {
-        return false;
+        return ROLE_PERMISSION_STATUS.UNAUTHORIZED;
       }
 
       initializePermissionConfig(data, roleValue);
       loadedRoleValue = roleValue;
       saveSelectedRole(roleValue);
-      return true;
+      return ROLE_PERMISSION_STATUS.AUTHORIZED;
+    })
+    .catch(() => {
+      if (operationVersion !== roleOperationVersion) {
+        return ROLE_PERMISSION_STATUS.STALE;
+      }
+
+      return ROLE_PERMISSION_STATUS.ERROR;
     })
     .finally(() => {
       if (activeRoleOperation && activeRoleOperation.promise === operationPromise) {
@@ -451,6 +465,10 @@ export function restoreSelectedRole(roleValue) {
     force: true,
     clearBeforeLoad: false,
   });
+}
+
+export function isRolePermissionAuthorized(status) {
+  return status === ROLE_PERMISSION_STATUS.AUTHORIZED;
 }
 
 export function getCurrentRoleRequestConfig() {
