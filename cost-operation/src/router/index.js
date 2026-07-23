@@ -17,8 +17,10 @@ import Unauthorized from '../views/noPermission/noDataAuth.vue'
 import {
   authorizeRouteRole,
   canEnterRolePage,
+  clearPendingRoleRoute,
   getRouteRole,
   ROLE_PERMISSION_STATUS,
+  savePendingRoleRoute,
 } from '@/config/role'
 
 const routes = [
@@ -316,8 +318,19 @@ async function roleAccessGuard(to) {
   const requiredRole = getRouteRole(to.path)
 
   if (requiredRole === undefined) {
+    if (to.path === '/roleSelect' && to.query.fromRoleGuard !== '1') {
+      clearPendingRoleRoute()
+    }
+
     return true
   }
+
+  const pendingRoleRoute = {
+    fullPath: to.fullPath,
+    roleValue: requiredRole
+  }
+  // 权限请求可能触发4A登录，必须在请求前保存原始目标路由。
+  savePendingRoleRoute(pendingRoleRoute.fullPath, pendingRoleRoute.roleValue)
 
   try {
     const permissionStatus = await authorizeRouteRole(requiredRole)
@@ -327,7 +340,18 @@ async function roleAccessGuard(to) {
       return false
     }
 
+    if (permissionStatus === ROLE_PERMISSION_STATUS.UNAUTHORIZED) {
+      clearPendingRoleRoute(pendingRoleRoute)
+      return {
+        path: '/roleSelect',
+        query: {
+          fromRoleGuard: '1'
+        }
+      }
+    }
+
     if (permissionStatus !== ROLE_PERMISSION_STATUS.AUTHORIZED) {
+      // 请求异常时保留待恢复路由，4A回跳后由角色选择页重新校验。
       return {
         path: '/roleSelect',
         query: {
@@ -337,6 +361,7 @@ async function roleAccessGuard(to) {
     }
 
     if (!canEnterRolePage(requiredRole)) {
+      clearPendingRoleRoute(pendingRoleRoute)
       return {
         path: '/Unauthorized',
         query: {
@@ -345,8 +370,10 @@ async function roleAccessGuard(to) {
       }
     }
 
+    clearPendingRoleRoute(pendingRoleRoute)
     return true
   } catch {
+    // 异常可能来自4A登录跳转，不能清除原始业务路由。
     return {
       path: '/roleSelect',
       query: {
