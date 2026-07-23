@@ -271,7 +271,6 @@ export function getPermissionConfig(config) {
           regionCodeList: permissionData.regionCodeList,
           geoTree: permissionData.geoTree,
         };
-
       resolve({
         status: 200,
         massage: "success",

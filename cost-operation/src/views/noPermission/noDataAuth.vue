@@ -302,16 +302,15 @@ import {
   getNoDataAuthList,
   getNoDataAuthOptions,
 } from "@/api/noDataAuth";
-import { getPermissionConfig } from '@/api/role';
 import {
   allCxoCloudPermissionList,
   allDataTypePermissionList,
   cxoDataTypePermissionMap,
+  ensureRolePermission,
   getCurrentRoleRequestConfig,
-  initializePermissionConfig,
   isCxoRole,
+  restoreSelectedRole,
   ROLE_CODE_ORDER,
-  saveSelectedRole,
   selectedRoleValue,
 } from '@/config/role';
 
@@ -536,7 +535,7 @@ const loadOptions = async () => {
   let permissionRequest;
 
   if (isCxoRequest) {
-    permissionRequest = getPermissionConfig(requestConfig);
+    permissionRequest = ensureRolePermission(requestedRoleValue);
   }
 
   const response = await optionRequest;
@@ -558,20 +557,17 @@ const loadOptions = async () => {
   }
 
   if (isCxoRequest) {
-    const permissionResponse = await permissionRequest;
-    const permissionData = permissionResponse.data;
+    const permissionReady = await permissionRequest;
 
     if (requestId !== optionRequestId) {
       return;
     }
 
-    if (permissionData === null || Array.isArray(permissionData)) {
-      initializePermissionConfig(permissionData, requestedRoleValue);
+    if (!permissionReady) {
       ownedCxoTableRows.value = [];
       return;
     }
 
-    initializePermissionConfig(permissionData, requestedRoleValue);
     ownedCxoTableRows.value = createCxoOwnedTableRows(
       allCxoCloudPermissionList,
       allDataTypePermissionList,
@@ -847,19 +843,11 @@ const handleBack = async () => {
 
   try {
     if (returnContext.returnRole) {
-      const permissionResponse = await getPermissionConfig({
-        headers: {
-          'X-Current-Role': returnContext.returnRole,
-        },
-      });
+      const restored = await restoreSelectedRole(returnContext.returnRole);
 
-      if (permissionResponse.data === null || Array.isArray(permissionResponse.data)) {
+      if (!restored) {
         throw new Error('恢复原角色权限失败');
       }
-
-      // 权限响应成功后再提交角色状态，失败时申请页角色和数据保持不变。
-      initializePermissionConfig(permissionResponse.data, returnContext.returnRole);
-      saveSelectedRole(returnContext.returnRole);
     }
 
     await router.replace(returnContext.returnTo);

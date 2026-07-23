@@ -14,6 +14,11 @@ import SaleDetail from '../views/saleView/saleDetail/index.vue'
 import NoPermission from '../views/noPermission/index.vue'
 import NoPermissionTest from '../views/noPermissionTest/index.vue'
 import Unauthorized from '../views/noPermission/noDataAuth.vue'
+import {
+  authorizeRouteRole,
+  canEnterRolePage,
+  getRouteRole,
+} from '@/config/role'
 
 const routes = [
   {
@@ -306,6 +311,45 @@ function afterEachGuard(to, from) {
   }
 }
 
+async function roleAccessGuard(to) {
+  const requiredRole = getRouteRole(to.path)
+
+  if (requiredRole === undefined) {
+    return true
+  }
+
+  try {
+    const roleAuthorized = await authorizeRouteRole(requiredRole)
+
+    if (!roleAuthorized) {
+      return {
+        path: '/roleSelect',
+        query: {
+          fromRoleGuard: '1'
+        }
+      }
+    }
+
+    if (!canEnterRolePage(requiredRole)) {
+      return {
+        path: '/Unauthorized',
+        query: {
+          returnTo: '/roleSelect?fromUnauthorized=1'
+        }
+      }
+    }
+
+    return true
+  } catch {
+    return {
+      path: '/roleSelect',
+      query: {
+        fromRoleGuard: '1'
+      }
+    }
+  }
+}
+
 /**
  * 路由守卫工具函数
  */
@@ -382,6 +426,9 @@ function initializeRouteGuard() {
     enabled: guardState.enabled,
     config: ROUTE_CONFIG.guard
   })
+
+  // 角色守卫必须先完成目标页面角色校验，再执行原有的 tab 路由检查。
+  router.beforeEach(roleAccessGuard)
 
   // 注册前置守卫
   router.beforeEach(beforeEachGuard)

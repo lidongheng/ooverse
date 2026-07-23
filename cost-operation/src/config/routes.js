@@ -2,6 +2,7 @@
  * 路由守卫配置文件
  * 定义路径和tab参数的映射关系，确保路由一致性
  */
+import { isRoleManagedRoute } from '@/config/role';
 
 export const ROUTE_CONFIG = {
   // 路由守卫配置
@@ -68,9 +69,6 @@ export const ROUTE_CONFIG = {
   specialRoutes: [
     '/',
     '/roleSelect',
-    '/costOperation',
-    '/saleHome',
-    '/saleDetail',
     '/noPermission',
     '/noPermissionTest',
     '/login',
@@ -187,7 +185,7 @@ export function checkRouteRedirect(path, tab) {
   }
 
   // 检查特殊路由
-  if (isSpecialRoute(path)) {
+  if (isSpecialRoute(path) || isRoleManagedRoute(path)) {
     return null // 特殊路由不需要检查
   }
 

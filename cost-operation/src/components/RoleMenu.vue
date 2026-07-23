@@ -48,17 +48,13 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import RolePermissionCard from "@/components/RolePermissionCard.vue";
 import RolePermissionGuide from '@/components/RolePermissionGuide.vue';
-import { getPermissionConfig } from "@/api/role";
 import {
   canEnterRolePage,
-  getCurrentRoleRequestConfig,
+  changeSelectedRole,
+  ensureRolePermission,
+  getRouteRole,
   getRoleTargetPath,
-  initializePermissionConfig,
-  isRoleDisabled,
-  ROLE_CODE_ORDER,
-  rolePermissionList,
   roles,
-  saveSelectedRole,
   selectedRoleValue,
   syncSelectedRoleFromSession,
 } from "@/config/role";
@@ -77,8 +73,7 @@ const rolePermissionGuideRef = ref(null);
 const permissionReturnTo = ref('');
 const permissionReturnRole = ref('');
 const roleCardPopoverStyle = ref({});
-let permissionRequestId = 0;
-let pendingPermissionRequest = Promise.resolve();
+let pendingPermissionRequest = Promise.resolve(true);
 
 const roleGuidePageKey = computed(() => {
   return ROLE_GUIDE_PAGE_KEY_MAP[route.name];
@@ -135,24 +130,17 @@ const closeRoleCard = (event) => {
   showRoleCard.value = false;
 };
 
-const refreshRolePermission = async (roleValue) => {
-  saveSelectedRole(roleValue);
-  const requestId = ++permissionRequestId;
-  const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
-
-  if (requestId !== permissionRequestId) {
-    return;
-  }
-
-  initializePermissionConfig(permissionResponse.data, roleValue);
-};
-
 const handleRoleSelection = (roleValue) => {
-  pendingPermissionRequest = refreshRolePermission(roleValue);
+  pendingPermissionRequest = changeSelectedRole(roleValue).catch(() => false);
 };
 
 const handleStart = async (roleValue) => {
-  await pendingPermissionRequest;
+  const permissionReady = await pendingPermissionRequest;
+
+  if (!permissionReady) {
+    return;
+  }
+
   showRoleCard.value = false;
 
   if (canEnterRolePage(roleValue)) {
@@ -171,35 +159,21 @@ const handleStart = async (roleValue) => {
 
 const initializeRoleMenuData = async () => {
   syncSelectedRoleFromSession();
+  const routeRole = getRouteRole(route.path);
 
-  if (selectedRoleValue.value && roles.length > 0) {
+  if (!routeRole) {
     return;
   }
 
-  // 刷新业务页面时不会经过 RoleSelect，需要在 Header 内补齐共享权限数据。
-  const requestedRoleValue = selectedRoleValue.value;
-  const permissionResponse = await getPermissionConfig(getCurrentRoleRequestConfig());
-  initializePermissionConfig(permissionResponse.data, requestedRoleValue);
+  // 路由守卫通常已完成初始化；直接进入页面时 ensure 会补齐且复用同角色请求。
+  const permissionReady = await ensureRolePermission(routeRole);
 
-  if (permissionResponse.data === null) {
+  if (!permissionReady) {
     router.replace("/roleSelect");
     return;
   }
 
-  if (!selectedRoleValue.value && rolePermissionList.length > 0) {
-    const sortedRuleCodeList = rolePermissionList
-      .filter((role) => !isRoleDisabled(role.code))
-      .sort((currentRole, nextRole) => {
-        return ROLE_CODE_ORDER.indexOf(currentRole.code) - ROLE_CODE_ORDER.indexOf(nextRole.code);
-      });
-    if (sortedRuleCodeList.length === 0) {
-      return;
-    }
-    pendingPermissionRequest = refreshRolePermission(sortedRuleCodeList[0].code);
-    await pendingPermissionRequest;
-  }
-
-  if (selectedRoleValue.value && !canEnterRolePage(selectedRoleValue.value)) {
+  if (!canEnterRolePage(routeRole)) {
     router.replace({
       path: '/Unauthorized',
       query: {
@@ -213,7 +187,9 @@ onMounted(() => {
   document.addEventListener("click", closeRoleCard);
   window.addEventListener('resize', updateRoleCardPosition);
   window.addEventListener('scroll', updateRoleCardPosition, true);
-  initializeRoleMenuData();
+  initializeRoleMenuData().catch(() => {
+    router.replace('/roleSelect');
+  });
 });
 
 onBeforeUnmount(() => {
