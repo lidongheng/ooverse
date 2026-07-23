@@ -2,7 +2,6 @@ import { reactive, ref } from "vue";
 import { getPermissionConfig } from '@/api/role';
 
 export const ROLE_STORAGE_KEY = "infraMap:selectedRole";
-const PENDING_ROLE_ROUTE_STORAGE_KEY = 'infraMap:pendingRoleRoute';
 
 export const ROLE_CODE_ORDER = [
   "ROLE_CXO",
@@ -311,39 +310,6 @@ export function syncSelectedRoleFromSession() {
   selectedRoleValue.value = sessionStorage.getItem(ROLE_STORAGE_KEY);
 }
 
-export function savePendingRoleRoute(fullPath, roleValue) {
-  sessionStorage.setItem(PENDING_ROLE_ROUTE_STORAGE_KEY, JSON.stringify({
-    fullPath,
-    roleValue,
-  }));
-}
-
-export function getPendingRoleRoute() {
-  const pendingRoleRoute = sessionStorage.getItem(PENDING_ROLE_ROUTE_STORAGE_KEY);
-
-  if (pendingRoleRoute === null) {
-    return undefined;
-  }
-
-  return JSON.parse(pendingRoleRoute);
-}
-
-export function clearPendingRoleRoute(expectedRoute) {
-  if (expectedRoute === undefined) {
-    sessionStorage.removeItem(PENDING_ROLE_ROUTE_STORAGE_KEY);
-    return;
-  }
-
-  const pendingRoleRoute = getPendingRoleRoute();
-  if (
-    pendingRoleRoute
-    && pendingRoleRoute.fullPath === expectedRoute.fullPath
-    && pendingRoleRoute.roleValue === expectedRoute.roleValue
-  ) {
-    sessionStorage.removeItem(PENDING_ROLE_ROUTE_STORAGE_KEY);
-  }
-}
-
 function createRoleRequestConfig(roleValue) {
   if (roleValue === undefined) {
     return undefined;
@@ -469,6 +435,12 @@ export async function ensureRoleCatalog() {
     return true;
   }
 
+  roleCatalogLoaded = initializeRoleCatalog(data);
+  return roleCatalogLoaded;
+}
+
+export async function refreshRoleCatalog() {
+  const data = await requestPermissionData(undefined);
   roleCatalogLoaded = initializeRoleCatalog(data);
   return roleCatalogLoaded;
 }
