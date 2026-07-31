@@ -2,6 +2,8 @@ const userAuthMock = {
   account: "12345678",
   geoTree: [
     {
+      regionScopeCode: 'DOMESTIC',
+      regionScopeName: '国内',
       name: "英超",
       code: "PREMIER_LEAGUE",
       children: [
@@ -20,6 +22,8 @@ const userAuthMock = {
       ],
     },
     {
+      regionScopeCode: 'DOMESTIC',
+      regionScopeName: '国内',
       name: "西甲",
       code: "LA_LIGA",
       children: [
@@ -38,6 +42,8 @@ const userAuthMock = {
       ],
     },
     {
+      regionScopeCode: 'DOMESTIC',
+      regionScopeName: '国内',
       name: "意甲",
       code: "SERIE_A",
       children: [
@@ -52,6 +58,8 @@ const userAuthMock = {
       ],
     },
     {
+      regionScopeCode: 'OVERSEAS',
+      regionScopeName: '海外',
       name: "德甲",
       code: "BUNDESLIGA",
       children: [
@@ -66,6 +74,8 @@ const userAuthMock = {
       ],
     },
     {
+      regionScopeCode: 'OVERSEAS',
+      regionScopeName: '海外',
       name: "法甲",
       code: "LIGUE_1",
       children: [

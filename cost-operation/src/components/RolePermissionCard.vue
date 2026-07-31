@@ -132,29 +132,22 @@
             {{ region.label }}
           </span>
         </div>
-        <p v-else class="empty-message">你没有当前页面的数据权限，请勾选下方Region申请数据权限。</p>
+        <p v-else class="empty-message">你没有当前页面的数据权限，请点击下方数据权限申请按钮申请数据权限。</p>
       </div>
 
       <div v-if="unavailableRegions.length > 0" class="region-block region-block--unavailable">
         <div class="region-status">
           <p>未拥有Region权限数量：{{ unavailableRegions.length }}个</p>
-          <p>已选择Region数量：{{ selectedRegionCodes.length }}个</p>
         </div>
         <div class="region-grid">
-          <label
+          <span
             v-for="region in unavailableRegions"
             :key="region.value"
-            class="region-item region-item--selectable"
-            :class="{ 'region-item--selected': selectedRegionCodes.includes(region.value) }"
+            class="region-item region-item--unavailable"
           >
             <SvgIcon class="permission-svg-icon" :icon-name="region.iconName" />
-            <input
-              v-model="selectedRegionCodes"
-              type="checkbox"
-              :value="region.value"
-            >
             <span>{{ region.label }}</span>
-          </label>
+          </span>
         </div>
       </div>
     </section>
@@ -209,7 +202,6 @@ const props = defineProps({
 const emit = defineEmits(["role-change", "start"]);
 const router = useRouter();
 const selectedRole = ref("");
-const selectedRegionCodes = ref([]);
 const selectedCxoPermissionMap = reactive({
   CXO_CLOUD_GENERAL_COMPUTING: [],
   CXO_CLOUD_NPU: [],
@@ -283,7 +275,7 @@ const showApplyButton = computed(() => {
     });
   }
 
-  return showPermissionSection.value && selectedRegionCodes.value.length > 0;
+  return showPermissionSection.value;
 });
 
 const showStartButton = computed(() => {
@@ -309,7 +301,6 @@ const handleRoleClick = (role) => {
   }
 
   selectedRole.value = role.value;
-  selectedRegionCodes.value = [];
   selectedCxoPermissionMap.CXO_CLOUD_GENERAL_COMPUTING = [];
   selectedCxoPermissionMap.CXO_CLOUD_NPU = [];
 
@@ -381,10 +372,7 @@ const handlePermissionApply = () => {
 
   router.push({
     path: "/Unauthorized",
-    query: {
-      ...getReturnQuery(),
-      regionCodes: selectedRegionCodes.value.join(","),
-    },
+    query: getReturnQuery(),
   });
 };
 
@@ -770,30 +758,17 @@ watch(
   box-sizing: border-box;
 }
 
-.region-item--selectable {
+.region-item--unavailable {
   gap: 6px;
   border: 1px solid #dcdfe6;
   background: #f5f7fa;
   color: #a8abb2;
-
-  input {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    accent-color: #3f5cff;
-  }
 
   span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-}
-
-.region-item--selected {
-  border-color: #409eff;
-  background: #ecf5ff;
-  color: #409eff;
 }
 
 .region-item--owned {

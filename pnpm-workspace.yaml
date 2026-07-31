@@ -4,3 +4,13 @@ packages:
   - ioc
   - operation-map
   - cost-operation
+allowBuilds:
+  core-js: false
+  cwebp-bin: false
+  esbuild: false
+  fsevents: false
+  gifsicle: false
+  mozjpeg: false
+  optipng-bin: false
+  pngquant-bin: false
+  vue-demi: false

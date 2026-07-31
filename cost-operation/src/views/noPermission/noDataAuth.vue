@@ -173,14 +173,28 @@
           <el-form-item label="Region" prop="regionCodes" required>
             <section class="region-panel">
             <div class="region-toolbar">
+              <label class="region-toolbar__label">区域</label>
+              <el-select
+                v-model="regionScopeFilter"
+                class="region-toolbar__select"
+                @change="handleRegionScopeChange"
+              >
+                <el-option label="全部" value="all" />
+                <el-option
+                  v-for="scope in regionScopeOptions"
+                  :key="scope.code"
+                  :label="scope.name"
+                  :value="scope.code"
+                />
+              </el-select>
               <label class="region-toolbar__label">大区</label>
               <el-select v-model="areaFilter" class="region-toolbar__select" @change="handleAreaChange">
                 <el-option label="全部" value="all" />
                 <el-option
                   v-for="area in areaOptions"
-                  :key="area"
-                  :label="area"
-                  :value="area"
+                  :key="area.code"
+                  :label="area.name"
+                  :value="area.code"
                 />
               </el-select>
               <el-input
@@ -332,6 +346,7 @@ const FourGridIcon = {
 const activeStatus = ref("waiting");
 const route = useRoute();
 const router = useRouter();
+const regionScopeFilter = ref('all');
 const areaFilter = ref("all");
 const formRef = ref();
 const keyword = ref("");
@@ -357,7 +372,37 @@ const form = reactive({
   reason: "",
 });
 
-const areaOptions = computed(() => unownedRegionGroups.value.map((group) => group.name));
+const regionScopeOptions = computed(() => {
+  const optionMap = new Map();
+
+  // 区域选项按后端 geoTree 的首次出现顺序去重。
+  unownedRegionGroups.value.forEach((group) => {
+    if (!optionMap.has(group.regionScopeCode)) {
+      optionMap.set(group.regionScopeCode, {
+        code: group.regionScopeCode,
+        name: group.regionScopeName,
+      });
+    }
+  });
+
+  return Array.from(optionMap.values());
+});
+const areaOptions = computed(() => {
+  return unownedRegionGroups.value
+    .filter((group) => {
+      if (regionScopeFilter.value === 'all') {
+        return true;
+      }
+
+      return group.regionScopeCode === regionScopeFilter.value;
+    })
+    .map((group) => {
+      return {
+        code: group.code,
+        name: group.name,
+      };
+    });
+});
 const allRegionCodes = computed(() =>
   unownedRegionGroups.value.flatMap((group) => group.children.map((region) => region.code))
 );
@@ -409,11 +454,18 @@ const isAllRegionsIndeterminate = computed(() => {
 
 const visibleRegionGroups = computed(() => {
   const groups = unownedRegionGroups.value.filter((group) => {
-    if (areaFilter.value === "all") {
-      return true;
+    if (
+      regionScopeFilter.value !== 'all'
+      && group.regionScopeCode !== regionScopeFilter.value
+    ) {
+      return false;
     }
 
-    return group.name === areaFilter.value;
+    if (areaFilter.value !== 'all' && group.code !== areaFilter.value) {
+      return false;
+    }
+
+    return true;
   });
 
   if (!keyword.value) {
@@ -716,6 +768,11 @@ const toggleRegionGroup = (group) => {
 
 const toggleGroup = (id) => {
   openedGroups.value = toggleById(openedGroups.value, id);
+};
+
+const handleRegionScopeChange = () => {
+  areaFilter.value = 'all';
+  openedGroups.value = visibleRegionGroups.value.map((group) => group.code);
 };
 
 const handleAreaChange = () => {
@@ -1185,7 +1242,7 @@ watch(selectedRoleValue, async () => {
 
 .region-toolbar {
   display: grid;
-  grid-template-columns: auto 160px minmax(0, 1fr);
+  grid-template-columns: auto 160px auto 160px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
   padding: 0 18px 16px;
@@ -1399,6 +1456,18 @@ watch(selectedRoleValue, async () => {
 
   .resource-card__meta {
     white-space: normal;
+  }
+
+  .region-toolbar {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .region-toolbar__select {
+    width: 100%;
+  }
+
+  .region-toolbar__search {
+    grid-column: 1 / -1;
   }
 }
 </style>
