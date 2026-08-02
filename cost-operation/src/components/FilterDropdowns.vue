@@ -19,7 +19,10 @@
         <template #reference>
           <button class="select-trigger area-trigger" type="button" :disabled="loading">
             <el-icon v-if="filter.icon === 'location'" class="area-trigger-icon"><Location /></el-icon>
-            <span>{{ getAreaSummary(filter) }}</span>
+            <span class="select-tag-bg">{{ getAreaSummary(filter)[0] }}</span>
+            <span v-if="getAreaSummary(filter)?.[1]" class="select-tag-bg">
+              {{ getAreaSummary(filter)[1] }}
+            </span>
             <el-icon><ArrowDown /></el-icon>
           </button>
         </template>
@@ -99,7 +102,8 @@
       >
         <template #reference>
           <button class="select-trigger resource-trigger" type="button" :disabled="loading">
-            <span>{{ getCustomSummary(filter) }}</span>
+            <span class="select-tag-bg">{{ getCustomSummary(filter)[0] }}</span>
+            <span class="select-tag-bg" v-if="getCustomSummary(filter)?.[1]">{{ getCustomSummary(filter)[1] }}</span>
             <el-icon><ArrowDown /></el-icon>
           </button>
         </template>
@@ -108,14 +112,23 @@
           class="dropdown-panel custom-list-panel"
         >
           <div class="option-list">
-            <label class="option-row checked-row">
-              <el-checkbox
-                :model-value="isAllSelected(getCustomValue(filter.valueKey), getCustomRootOptions(filter))"
-                :indeterminate="isIndeterminate(getCustomValue(filter.valueKey), getCustomRootOptions(filter))"
-                @change="checked => toggleCustomAll(filter, filter.valueKey, getCustomRootOptions(filter), checked)"
-              />
-              <span>全部</span>
-            </label>
+            <template v-if="filter.multiple !== false">
+              <label class="option-row checked-row">
+                <el-checkbox
+                  :model-value="
+                    isAllSelected(getCustomValue(filter.valueKey), getCustomRootOptions(filter))
+                  "
+                  :indeterminate="
+                    isIndeterminate(getCustomValue(filter.valueKey), getCustomRootOptions(filter))
+                  "
+                  @change="
+                    (checked) =>
+                      toggleCustomAll(filter, filter.valueKey, getCustomRootOptions(filter), checked)
+                  "
+                />
+                <span>全部</span>
+              </label>
+            </template>
             <el-checkbox-group
               :model-value="getCustomValue(filter.valueKey)"
               class="option-group"
@@ -216,27 +229,29 @@
         <template #reference>
           <button
             class="select-trigger"
-            :class="{ 'area-trigger': isRangeAreaCascader }"
+            :class="{ 'area-trigger': filter.label === 'Region' }"
             type="button"
             :disabled="loading"
           >
-            <el-icon v-if="isRangeAreaCascader && filter.icon === 'location'" class="area-trigger-icon"><Location /></el-icon>
-            <span>{{ rangeSummary }}</span>
+            <el-icon v-if="filter.icon === 'location'" class="area-trigger-icon"><Location /></el-icon>
+            <span class="regionBg firstRegion" v-if="filter.label === 'Region'">{{ firstRegionText }}</span>
+            <span class="regionBg moreRegion" v-if="filter.label === 'Region' && moreRegionText">{{ moreRegionText }}</span>
+            <span v-if="filter.label !== 'Region'">{{ rangeSummary }}</span>
             <el-icon><ArrowDown /></el-icon>
           </button>
         </template>
         <div
           class="dropdown-panel range-panel"
-          :class="{
-            'range-panel--single': !showRegionFilter || !showAzFilter,
-            'range-panel--area-cascader': isRangeAreaCascader,
-          }"
+          :class="{ 'range-panel--single': !showRegionFilter || !showAzFilter }"
         >
           <div v-if="showRegionSearch" class="search-box range-search">
             <el-icon><Search /></el-icon>
             <input v-model="regionKeyword" placeholder="请输入关键字" />
           </div>
-          <div class="range-columns" :class="{ 'range-columns--single': !showRegionFilter || !showAzFilter }">
+          <div
+            class="range-columns"
+            :class="{ 'range-columns--single': !showRegionFilter || !showAzFilter }"
+          >
             <div v-if="showRegionFilter" class="range-column">
               <div class="column-title">{{ regionColumnConfig.label }}</div>
               <div class="option-list">
@@ -272,7 +287,6 @@
                     @change="checked => toggleAll('az', checked)"
                   />
                   <span>全部</span>
-                  <el-icon><ArrowRight /></el-icon>
                 </label>
                 <el-checkbox-group v-model="azValue" class="option-group">
                   <label
@@ -281,7 +295,6 @@
                     class="option-row"
                   >
                     <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
-                    <el-icon><ArrowRight /></el-icon>
                   </label>
                 </el-checkbox-group>
               </div>
@@ -701,6 +714,12 @@ const rangeSummary = computed(() => {
   }
   return `已选 ${regionValue.value.length + azValue.value.length} 项`;
 });
+const firstRegionText = computed(() => {
+  return azValue.value.length ? azValue.value[0] : '请选择';
+});
+const moreRegionText = computed(() => {
+  return azValue.value.length > 1 ? `+${azValue.value.length - 1}` : '';
+});
 
 watch(resourceSeriesValue, (nextValue, oldValue) => {
   if (!hasResourceTreeFilter.value) return;
@@ -854,6 +873,7 @@ function normalizeNode(item) {
   return {
     label,
     value,
+    areaName: item.areaName,
     name: item?.name ?? label,
     level: item?.level,
     obj: item?.obj,
@@ -879,7 +899,7 @@ function getFilterConfigByKey(key) {
 
 function getRangeColumnOptions(column, legacyOptionKey) {
   const optionKey = getRangeColumnOptionKey(column, legacyOptionKey);
-  return sortOptionsByInitial(normalizeOptions(props.options?.[optionKey]));
+  return normalizeOptions(props.options?.[optionKey]);
 }
 
 function getRangeColumnOptionKey(column, legacyOptionKey) {
@@ -922,7 +942,9 @@ function allSelectedValue() {
 function customAllSelectedValue() {
   return customFilters.value.reduce((result, filter) => {
     if (filter.type === 'list') {
-      result[filter.valueKey] = getCustomRootOptions(filter).map(item => item.value);
+      result[filter.valueKey] = filter.multiple === false
+        ? [getCustomRootOptions(filter)[0]?.value].filter(Boolean)
+        : getCustomRootOptions(filter).map((item) => item.value);
       return result;
     }
     if (hasCustomCascadeOutput(filter)) {
@@ -1060,8 +1082,8 @@ function filterAzOptionsByRegions(options, selectedRegions) {
     .filter(Boolean);
 
   return options.filter((item) => {
-    const azName = String(item.label ?? item.value ?? "");
-    return regionLabels.some(region => azName.startsWith(region));
+    const azName = String(item.label ?? item.value ?? '');
+    return regionLabels.some((region) => region === item.areaName || azName || azName.startsWith(region));
   });
 }
 
@@ -1104,7 +1126,7 @@ function getCustomCurrentValue() {
 }
 
 function getCustomRootOptions(filter) {
-  return sortOptionsByInitial(normalizeOptions(props.options?.[filter.optionKey]));
+  return normalizeOptions(props.options?.[filter.optionKey]);
 }
 
 function getCustomLeafOptions(filter, parentValue) {
@@ -1203,9 +1225,9 @@ function setCustomActive(key, value) {
 
 function getCustomSummary(filter) {
   if (filter.type === 'list') {
-    return getSummary(getCustomValue(filter.valueKey), getCustomRootOptions(filter));
+    return getSummaryText(getCustomValue(filter.valueKey), getCustomRootOptions(filter));
   }
-  return getSummary(getCustomValue(filter.valueKey), getCustomLeafOptions(filter));
+  return getSummaryText(getCustomValue(filter.valueKey), getCustomLeafOptions(filter));
 }
 
 function getCustomPopperClass(filter) {
@@ -1379,7 +1401,7 @@ function setAreaDistrictActive(filter, value) {
 }
 
 function getAreaSummary(filter) {
-  return getSummary(getAreaValue(filter.regionValueKey), getAreaAllRegionOptions(filter));
+  return getSummaryText(getAreaValue(filter.regionValueKey), getAreaAllRegionOptions(filter));
 }
 
 function getAreaPopperClass() {
@@ -1659,6 +1681,13 @@ function getSummary(value, options) {
   const first = options.find(item => item.value === value[0])?.label ?? value[0];
   return value.length === 1 ? first : `${first} +${value.length - 1}`;
 }
+function getSummaryText(value, options) {
+  if (!value.length) {
+    return ['请选择'];
+  };
+  const first = options.find((item) => item.value === value[0])?.label ?? value[0];
+  return value.length === 1 ? [first] : [first, `+${value.length - 1}`];
+}
 
 function isAllSelected(value, options) {
   const optionValues = options.map(item => item.value);
@@ -1801,6 +1830,11 @@ function confirmResource() {
   background: #f5f7fb;
   color: #9095a3;
 }
+.select-tag-bg {
+  background-color: #f4f4f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
 
 .resource-trigger {
   width: 126px;
@@ -1820,8 +1854,25 @@ function confirmResource() {
   font-weight: 700;
 
   span {
-    flex: 1;
+    // flex: 1;
   }
+}
+.regionBg {
+  background: rgba(239, 239, 255, 1);
+  padding: 2px 6px;
+  color: rgba(51, 51, 107, 1);
+  border-radius: 8px;
+  font-family: "Microsoft YaHei";
+  font-style: Bold;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
+}
+.firstRegion {
+  max-width: 120px;
+}
+.moreRegion {
+  width: 45px;
 }
 
 .area-trigger-icon {

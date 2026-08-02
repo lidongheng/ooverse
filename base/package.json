@@ -1,0 +1,38 @@
+{
+  "name": "@ooverse/base",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Base shared module - HTTP, Auth, Router, Store, Utils, Types, Constants",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./http": "./src/http/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./router": "./src/router/index.ts",
+    "./store": "./src/store/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./types": "./src/types/index.ts",
+    "./constants": "./src/constants/index.ts",
+    "./i18n": "./src/i18n/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "vue": "3.5.25",
+    "vue-router": "4.6.4",
+    "pinia": "2.1.7",
+    "axios": "1.17.0",
+    "lodash-es": "4.18.1",
+    "dayjs": "1.11.18",
+    "vue-i18n": "11.1.11",
+    "@opentiny/vue-locale": "3.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "@types/lodash-es": "4.17.12",
+    "typescript": "^5.9.3"
+  }
+}
