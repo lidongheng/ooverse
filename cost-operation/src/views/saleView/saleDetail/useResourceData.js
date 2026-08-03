@@ -1,25 +1,16 @@
-import { storeToRefs } from 'pinia';
 import { computed, reactive, ref, watch } from 'vue';
-import { useCurrentDate } from '@/views/useCurrentDate';
-import obsDetailResponse from '@/api/obsDetail.json';
-import obsPageResponse from '@/api/obsPage.json';
-import obsTrendResponse from '@/api/obsTrend.json';
-import xpuDetailResponse from '@/api/xpuDetail.json';
-import xpuPageResponse from '@/api/xpuPage.json';
-import xpuTrendResponse from '@/api/xpuTrend.json';
+import { storeToRefs } from 'pinia';
+import { debounce } from '@shared/utils/utils.js';
+import { useCurrentDate as useCurrentStore } from '@/views/useCurrentDate';
+import {
+    getSalesDetailByObsAPI,
+    getSalesTableByObsAPI,
+    getSalesDetailByXpuAPI,
+    getSalesTableByXpuAPI,
+    getSalesDetailByEcsAPI,
+    getSalesTableByEcsAPI
+  } from '@/api/sales/index';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter';
-
-const { filterOtherValue, filterValue } = storeToRefs(useSaleFilterStore());
-
-function debounce(fn, delay) {
-    let timer = null;
-    return (...args) => {
-        window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            fn(...args);
-        }, delay);
-    };
-}
 
 // mock 数据会被页面侧赋值和加工，先深拷贝，避免一次请求污染下一次请求。
 const cloneResponse = (response) => JSON.parse(JSON.stringify(response));
@@ -114,51 +105,50 @@ export const getSalesTableByXpuAPI = (_params) =>
 export const getSalesTrendByXpuAPI = (_params) =>
     mockRequest(xpuTrendResponse, normalizeTrendResponse);
 
-// XPU 行内趋势图点击后再写入这里，避免页面初始就展示未按行筛选的趋势数据。
-export const xpuTrendData = ref([]);
+const { filterOtherValue, filterValue } = storeToRefs(useSaleFilterStore());
 
-// 下方这些状态被 saleDetail 多个组件共享：信息卡、图表、表格都从这里取数。
 export const tableDataSummary = ref({});
 export const directoryTreeList = ref([]);
 export const resourceTypeList = ref([]);
 export const directoryTreeLoading = ref(false);
+export const operationGenerationTreeList = ref([]);
+export const operationGenerationCheckedList = ref([]);
+export const kaiTypeList = ref([]);
+
+export const showCollapse = ref(true); // ecs算力分布
+export const isCollapsed = ref(true);
 export const leftCardData = reactive({
-    ecs: {},
-    obs: {},
-    xpu: {},
+  ecs: {},
+  obs: {},
+  xpu: {}
 });
+
 export const keyInfor = reactive({
     ecs: {},
     obs: {},
-    xpu: {},
+    xpu: {}
 });
+
 export const tableSummary = reactive({
     ecs: {},
     obs: {},
-    xpu: {},
+    xpu: {}
 });
 
 export const permissionCard = reactive({
-
     ecs: true,
-
     obs: true,
-
-    xpu: true,
-
+    xpu: true
 });
 
 export const permissionTable = reactive({
-
     ecs: true,
-
     obs: true,
-
-    xpu: true,
-
+    xpu: true
 });
 
 export const ecsTable = ref([]);
+
 export const obsTable = ref([]);
 
 export const xpuTable = ref([]);
@@ -168,363 +158,418 @@ export const pageNo = ref(1);
 export const pageSize = ref(50);
 
 export const pageInfo = ref({ total: 0 });
+
 export const currentSort = ref({
-    prop: '',
-    order: '',
+    prop: "",
+    order: ""
 });
 
 export const storageMode = ref([]);
-// OBS/XPU 资源详情的范围粒度由表格按钮控制，同时会参与 detail / page / trend 请求参数。
-export const rangeValue = ref('全部');
 
-// ECS 目录树会把代次、族、类型逐级写进 obj，表格请求可以直接拿 obj 作为筛选条件。
-export const
-    generationDirTreeList =
-        computed(() =>
-            filterOtherValue.value.generationDirTreeList ?? []); // 资源代次
-export const resourceTypeArr =
-    computed(() =>
-        filterOtherValue.value.resourceType ?? []); // 资源规格
-const areaList = computed(() => filterValue.value.areaName ?? []); // 大区
-const regionList = computed(() => filterValue.value.regionName ?? []); // region
-const azIdList = computed(() => filterValue.value.azId ?? []); // AZ
-const cardTypeList = computed(() =>
-    filterOtherValue.value.cardTypeList ?? []); // 卡类型
+export const dimensionalEnum = ref("");
 
-const dimensionalEnumMap = {
-    全部: '',
-    大区: 'area',
-    Region: 'region',
-    AZ: 'az',
-};
+export const generationDirTreeList = computed(() => {
+  return filterOtherValue.value.generationDirTreeList ?? [];
+});
 
-// 筛选组件和表格行传进来的值可能是数组或单值，统一成接口要求的数组结构。
-const toArrayValue = (value) => {
-    if (Array.isArray(value)) {
-        return value;
-    }
+export const resourceTypeArr = computed(() => {
+  return filterOtherValue.value.resourceType ?? [];
+});
 
-    if (value === undefined ||
-        value === null ||
-        value === '') {
-        return [];
-    }
+const areaList = computed(() => {
+  return filterValue.value.areaName ?? [];
+});
 
-    return [value];
-};
+const regionList = computed(() => {
+  return filterValue.value.regionName ?? [];
+});
 
-export const buildDimensionParams = ({
-    areaName,
-    regionId,
-    azId,
-}) => {
-    const params = {
-        dimensionalEnum: dimensionalEnumMap[rangeValue.value],
-        areaName: [],
-        regionId: [],
-        azId: [],
+const cardTypeList = computed(() => {
+  return filterOtherValue.value.cardTypeList ?? [];
+});
+
+const applyLevel = (arr = [], pItem = {}, plevel = 0, levelKeyMap = { 0: 'calcType', 1: 'family', 2: 'generation' }) => {
+  const _levelKeyMap = levelKeyMap;
+  return arr?.map((item) => {
+    const key = _levelKeyMap[plevel] ?? plevel.toString();
+    const obj = {
+      ...pItem.obj,
+      [key]: item.name
+    };
+    const objStr = JSON.stringify(obj);
+    let newItem = {
+      ...item,
+      level: plevel,
+      obj: obj,
+      objStr: objStr
     };
 
-    // dimensionalEnum 控制后端聚合粒度；下面三个数组必须互斥，只允许当前粒度对应字段有值。
-    if (rangeValue.value === '大区') {
-        params.areaName = toArrayValue(areaName);
+    if (item.children && item.children.length > 0) {
+      newItem.children = applyLevel(item.children, newItem, plevel + 1);
     }
+    return newItem;
+  });
+}
 
-    if (rangeValue.value === 'Region') {
-        params.regionId = toArrayValue(regionId);
-    }
-
-    if (rangeValue.value === 'AZ') {
-        params.azId = toArrayValue(azId);
-    }
-
-    return params;
+const appendEcsOptional = (params) => {
+  params.dirTreeList = resourceTypeList.value?.length ? resourceTypeList.value.map((v) => JSON.parse(v)) : [];
+  params.operationGenerationList = operationGenerationCheckedList.value?.length ? operationGenerationCheckedList.value : [];
+  params.kaiTypeList = kaiTypeList.value?.length ? kaiTypeList.value : [];
+  return params;
 };
 
-// 页面公共筛选用于 detail/page 请求；行内趋势图会用当前行数据单独调用 buildDimensionParams。
-const buildCurrentDimensionParams = () =>
-    buildDimensionParams({
+// ECS
+export const useResoureDetailByECS = (active) => {
+    const currentStore = useCurrentStore();
+    
+    // 左侧卡片
+    const loadCardData = () => {
+      const params = {
+        month: currentStore.saleMonth,
+        date: currentStore.saleDate,
         areaName: areaList.value,
-        regionId: regionList.value,
-        azId: azIdList.value,
-    });
-
-// 目录树递归时记录层级和路径对象，后面展开/选中节点时可以还原完整筛选条件。
-const applyLevel = (arr = [],
-    pitem = {}, plevel = 0) => {
-    const levelKeyMap = {
-        0: 'calcType',
-        1: 'family',
-        2: 'generation',
-    };
-    return arr?.map((item) => {
-        const key =
-            levelKeyMap[plevel] ??
-            plevel.toString();
-        const obj = {
-            ...pitem.obj,
-            [key]: item.name,
-        };
-        const objStr = JSON.stringify(obj);
-        let newltem = {
-            ...item,
-            level: plevel,
-            obj: obj,
-            objStr: objStr,
-        };
-
-        if (item.children &&
-            item.children.length > 0) {
-            newltem.children =
-
-                applyLevel(item.children, newltem, plevel + 1);
+        regionId: [],
+        regionName: regionList.value,
+      };
+      
+      leftCardData.ecs = {};
+      permissionCard.ecs = true;
+      getSalesDetailByEcsAPI(params).then((res) => {
+        if (res.status === 403) {
+          permissionCard.ecs = false;
+          return;
         }
-        return newltem;
-    });
+
+        if (res.status === 200) {
+          leftCardData.ecs = res.data ?? {};
+        }
+      });
+    };
+
+    const loadInfoData = debounce(() => {
+        const params = {
+          month: currentStore.saleMonth,
+          date: currentStore.saleDate,
+          areaName: areaList.value,
+          regionId: [],
+          regionName: regionList.value,
+          vcpuTypeList: resourceTypeArr.value,
+          generationDirTreeList: generationDirTreeList.value,
+          calcTypeList: []
+        };
+      
+        keyInfor.ecs = {};
+        getSalesDetailByEcsAPI(params).then((res) => {
+          if (res.status === 200) {
+            directoryTreeList.value = applyLevel(res.data.dirTreeList);
+            operationGenerationTreeList.value = applyLevel(res.data.operationGenerationList, {}, 0, { 0: 'operationGeneration', 1: 'kaiType' });
+            keyInfor.ecs = res.data ?? {};
+          }
+        });
+      }, 100);
+
+      const loadTableData = debounce(() => {
+        let params = {
+            month: currentStore.saleMonth,
+            date: currentStore.saleDate,
+            areaName: areaList.value,
+            regionId: [],
+            regionName: regionList.value,
+            vcpuTypeList: resourceTypeArr.value,
+            generationDirTreeList: generationDirTreeList.value,
+            dirTreeList: [],
+            operationGenerationList: [],
+            kaiTypeList: [],
+            pageNo: pageNo.value,
+            pageSize: pageSize.value,
+            sortField: currentSort.value.prop,
+            order: currentSort.value.order === 'descending' ? 2 : 1,
+            dimensionalEnum: dimensionalEnum.value
+        };
+        params = appendEcsOptional(params);
+        ecsTable.value = [];
+        tableSummary.ecs = {};
+        permissionTable.ecs = true;
+        getSalesTableByEcsAPI(params)
+            .then((res) => {
+                if (res.status === 403) {
+                    permissionTable.ecs = false;
+                    return;
+                }
+                if (res.status === 200 && res.data) {
+                    ecsTable.value = res.data.pageInfo?.records ?? [];
+                    pageInfo.value.total = res.data.pageInfo?.totalNum ?? 0;
+                    tableSummary.ecs = res.data.summary ?? {};
+                }
+            })
+            .catch(() => (pageInfo.value.total = 0));
+    }, 100);
+
+    watch(
+        [() => currentStore.saleDate, regionList],
+        () => {
+            loadCardData();
+        },
+        { immediate: true }
+    );
+    
+    watch(
+        [() => currentStore.saleDate, filterValue, filterOtherValue, active],
+        () => {
+            if (active.value !== 'ECS') {
+                return;
+            }
+            keyInfor.ecs = {};
+            loadInfoData();
+        },
+        { immediate: true }
+    );
+    
+    watch(
+        [
+            () => currentStore.saleDate,
+            filterValue,
+            filterOtherValue,
+            active,
+            pageNo,
+            pageSize,
+            currentSort,
+            resourceTypeList,
+            operationGenerationCheckedList,
+            kaiTypeList,
+            dimensionalEnum
+        ],
+        ([]) => {
+            if (active.value !== 'ECS') {
+                return;
+            }
+            ecsTable.value = [];
+            loadTableData();
+        },
+        { immediate: true }
+    );
 };
 
 // OBS
 export const useResoureDetailByOBS = (active) => {
-    const currentStore = useCurrentDate();
-    // 左侧资源卡片不依赖 active，日期或区域变化就刷新。
+    const currentStore = useCurrentStore();
     const loadCardData = () => {
-        const params = {
-            month: currentStore.saleMonth,
-            date: currentStore.saleDate,
-            ...buildCurrentDimensionParams(),
-        };
-        leftCardData.obs = {};
-        permissionCard.obs = true;
-
-        getSalesDetailByObsAPI(params).then((res) => {
-            if (res.status === 403) {
-                permissionCard.obs = false;
-                return;
-            }
-            if (res.status === 200) {
-                leftCardData.obs = res.data ?? {};
-            }
-        });
+      const params = {
+        month: currentStore.saleMonth,
+        date: currentStore.saleDate,
+        areaName: areaList.value,
+        regionId: [],
+        regionName: regionList.value,
+      };
+      leftCardData.obs = {};
+      permissionCard.obs = true;
+      getSalesDetailByObsAPI(params).then((res) => {
+        if (res.status === 403) {
+          permissionCard.obs = false;
+          return;
+        }
+        if (res.status === 200) {
+          leftCardData.obs = res.data ?? {};
+        }
+      });
     };
-    // 顶部关键信息和图表只在 OBS 页面激活时刷新，避免其它资源页重复请求。
+    
     const loadInfoData = debounce(() => {
-        const params = {
-            month: currentStore.saleMonth,
-            date: currentStore.saleDate,
-            ...buildCurrentDimensionParams(),
-        };
-        keyInfor.obs = {};
-
-        getSalesDetailByObsAPI(params).then((res) => {
-            if (res.status === 200) {
-                keyInfor.obs = res.data ??
-                    {};
-            }
-        });
+      const params = {
+        month: currentStore.saleMonth,
+        date: currentStore.saleDate,
+        areaName: areaList.value,
+        regionId: [],
+        regionName: regionList.value,
+      };
+      keyInfor.obs = {};
+      getSalesDetailByObsAPI(params).then((res) => {
+        if (res.status === 200) {
+          keyInfor.obs = res.data ?? {};
+        }
+      });
     }, 100);
-    // 资源详情表格受分页、排序、存储类型影响，刷新前先清掉旧数据和权限状态。
-    const loadTableData =
-        debounce(() => {
-            const params = {
-                month:
-                    currentStore.saleMonth,
-                date: currentStore.saleDate,
-                ...buildCurrentDimensionParams(),
-                pageNo: pageNo.value,
-                pageSize: pageSize.value,
-                sortField:
-                    currentSort.value.prop,
-                order:
-                    currentSort.value.order ===
-                        'descending' ? 2 : 1,
-                storageMode:
-                    storageMode.value,
-            };
-            obsTable.value = [];
-            tableSummary.obs = {};
-            permissionTable.obs = true;
 
-            getSalesTableByObsAPI(params
-            )
-                .then((res) => {
-                    if (res.status === 403) {
-                        permissionTable.obs =
-                            false;
-                        return;
-                    }
-                    if (res.status === 200) {
-                        obsTable.value =
-                            res.data?.pageInfo?.records ??
-                            [];
-                        pageInfo.value.total =
-                            res.data?.pageInfo?.totalNum ??
-                            0;
+    const loadTableData = debounce(() => {
+        const params = {
+          month: currentStore.saleMonth,
+          date: currentStore.saleDate,
+          areaName: areaList.value,
+          regionId: [],
+          regionName: regionList.value,
+          pageNo: pageNo.value,
+          pageSize: pageSize.value,
+          sortField: currentSort.value.prop,
+          order: currentSort.value.order === 'descending' ? 2 : 1,
+          storageMode: storageMode.value,
+          dimensionalEnum: dimensionalEnum.value
+        };
+      
+        obsTable.value = [];
+        tableSummary.obs = {};
+        permissionTable.obs = true;
+      
+        getSalesTableByObsAPI(params)
+          .then((res) => {
+            if (res.status === 403) {
+              permissionTable.obs = false;
+              return;
+            }
+            if (res.status === 200) {
+              obsTable.value = res.data?.pageInfo?.records ?? [];
+              pageInfo.value.total = res.data?.pageInfo?.totalNum ?? 0;
+              tableSummary.obs = res.data?.summaryVo ?? {};
+            }
+          })
+          .catch(() => (pageInfo.value.total = 0));
+      }, 100);
 
-                        tableSummary.obs =
-                            res.data?.summaryVo ?? {};
-                    }
-                })
-                .catch(() =>
-                    (pageInfo.value.total = 0));
-        }, 100);
-
-    watch(
-        [() => currentStore.saleDate,
-            filterValue, rangeValue],
+      watch(
+        [() => currentStore.saleDate, filterValue],
         ([]) => {
-            // 左侧卡片也要响应范围粒度，否则切换“全部/大区/Region/AZ”后卡片会停留旧口径。
             loadCardData();
         },
         {
             immediate: true,
         }
     );
-    // filterOtherValue 会影响 OBS 的统计信息，放在这里统一触发关键信息刷新。
     watch(
-        [() => currentStore.saleDate,
-            filterValue, filterOtherValue,
-            rangeValue, active],
+        [() => currentStore.saleDate, filterValue, filterOtherValue, active],
         ([]) => {
             if (active.value !== 'OBS') {
                 return;
             }
-            // OBS detail 同时驱动指标卡和 Region Top10，粒度变化时需要重新取 detail mock。
+            keyInfor.obs = {};
             loadInfoData();
         },
         {
             immediate: true,
         }
     );
-    // 表格 watch 比信息区多了分页、排序、storageMode，因为这些只影响表格。
     watch(
-        [() => currentStore.saleDate,
-            filterValue, filterOtherValue,
-            rangeValue, active, pageNo, pageSize,
-            currentSort, storageMode],
+        [() => currentStore.saleDate, filterValue, filterOtherValue, dimensionalEnum, active, pageNo, pageSize, currentSort, storageMode],
         ([]) => {
             if (active.value !== 'OBS') {
                 return;
             }
-            // OBS 表格请求参数也带 dimensionalEnum，和上方 detail 的粒度口径保持一致。
+            obsTable.value = [];
             loadTableData();
+        },
+        {
+            immediate: true,
         }
     );
 };
 
 // XPU
 export const useResoureDetailByXPU = (active) => {
-    const currentStore = useCurrentDate();
-    // XPU 左侧资源卡片同样不依赖当前 tab，只跟公共筛选和日期走。
+    const currentStore = useCurrentStore();
     const loadCardData = () => {
-        const params = {
-            month: currentStore.saleMonth,
-            date: currentStore.saleDate,
-            ...buildCurrentDimensionParams(),
-        };
-        leftCardData.xpu = {};
-        permissionCard.xpu = true;
-
-        getSalesDetailByXpuAPI(params).then((res) => {
-            if (res.status === 403) {
-                permissionCard.xpu = false;
-                return;
-            }
-            if (res.status === 200) {
-                leftCardData.xpu = res.data ?? {};
-            }
-        });
+      const params = {
+        month: currentStore.saleMonth,
+        date: currentStore.saleDate,
+        areaName: areaList.value,
+        regionId: [],
+        regionName: regionList.value,
+      };
+      leftCardData.xpu = {};
+      permissionCard.xpu = true;
+      getSalesDetailByXpuAPI(params).then((res) => {
+        if (res.status === 403) {
+          permissionCard.xpu = false;
+          return;
+        }
+        if (res.status === 200) {
+          leftCardData.xpu = res.data ?? {};
+        }
+      });
     };
-    // XPU 关键信息会受到卡类型筛选影响，所以请求参数里带 cardModel。
+    
     const loadInfoData = debounce(() => {
-        const params = {
-            month: currentStore.saleMonth,
-            date: currentStore.saleDate,
-            ...buildCurrentDimensionParams(),
-            cardModel: cardTypeList.value,
-        };
-        keyInfor.xpu = {};
-        getSalesDetailByXpuAPI(params).then((res) => {
-            if (res.status === 200) {
-                keyInfor.xpu = res.data ?? {};
-            }
-        });
+      const params = {
+        month: currentStore.saleMonth,
+        date: currentStore.saleDate,
+        areaName: areaList.value,
+        regionId: [],
+        regionName: regionList.value,
+        cardModel: cardTypeList.value,
+      };
+      keyInfor.xpu = {};
+      getSalesDetailByXpuAPI(params).then((res) => {
+        if (res.status === 200) {
+          keyInfor.xpu = res.data ?? {};
+        }
+      });
     }, 100);
-    // XPU 表格和趋势入口共用 pageInfo，切换到 XPU 时会覆盖 OBS 的表格分页总数。
+
     const loadTableData = debounce(() => {
         const params = {
-            month: currentStore.saleMonth,
-            date: currentStore.saleDate,
-            ...buildCurrentDimensionParams(),
-            cardModel: cardTypeList.value,
-            pageNo: pageNo.value,
-            pageSize: pageSize.value,
-            sortField: currentSort.value.prop,
-            order:
-                currentSort.value.order ===
-                    'descending' ? 2 : 1,
+          month: currentStore.saleMonth,
+          date: currentStore.saleDate,
+          areaName: areaList.value,
+          regionId: [],
+          regionName: regionList.value,
+          cardModel: cardTypeList.value,
+          pageNo: pageNo.value,
+          pageSize: pageSize.value,
+          sortField: currentSort.value.prop,
+          order: currentSort.value.order === 'descending' ? 2 : 1,
+          dimensionalEnum: dimensionalEnum.value
         };
+      
         xpuTable.value = [];
         tableSummary.xpu = {};
         permissionTable.xpu = true;
-
+      
         getSalesTableByXpuAPI(params)
-            .then((res) => {
-                if (res.status === 403) {
-                    permissionTable.xpu =
-                        false;
-                    return;
-                }
-                if (res.status === 200) {
-                    xpuTable.value =
-                        res.data?.pageInfo?.records ?? [];
-                    pageInfo.value.total =
-                        res.data?.pageInfo?.totalNum ?? 0;
-                    tableSummary.xpu = res.data?.summaryVo ?? {};
-                }
-            })
-            .catch(() =>
-                (pageInfo.value.total = 0));
-    }, 100);
+          .then((res) => {
+            if (res.status === 403) {
+              permissionTable.xpu = false;
+              return;
+            }
+            if (res.status === 200) {
+              xpuTable.value = res.data?.pageInfo?.records ?? [];
+              pageInfo.value.total = res.data?.pageInfo?.totalNum ?? 0;
+              tableSummary.xpu = res.data?.summaryVo ?? {};
+            }
+          })
+          .catch(() => (pageInfo.value.total = 0));
+      }, 100);
 
-    watch(
-        [() => currentStore.saleDate,
-            filterValue, rangeValue],
+      watch(
+        [() => currentStore.saleDate, filterValue],
         ([]) => {
-            // XPU 左侧卡片同样按当前粒度展示，避免和右侧详情口径不一致。
-            loadCardData();
+          loadCardData();
         },
         {
-            immediate: true,
+          immediate: true,
         }
-    );
-    // 卡类型筛选写在 filterOtherValue，XPU 顶部信息卡和图表都通过它联动。
-    watch(
-        [() => currentStore.saleDate,
-            filterValue, filterOtherValue,
-            rangeValue, active],
+      );
+      
+      watch(
+        [() => currentStore.saleDate, filterValue, filterOtherValue, active],
         ([]) => {
-            if (active.value !== 'XPU') {
-                return;
-            }
-            // XPU detail 返回总量/A3/A2/A1 四个指标，粒度和卡类型变化时都需要刷新。
-            loadInfoData();
+          if (active.value !== 'XPU') {
+            return;
+          }
+          keyInfor.xpu = {};
+          loadInfoData();
         },
         {
-            immediate: true,
+          immediate: true,
         }
-    );
-    // XPU 表格暂时没有 storageMode，但保留分页和排序监听。
-    watch(
-        [() => currentStore.saleDate,
-            filterValue, filterOtherValue,
-            rangeValue, active, pageNo, pageSize,
-            currentSort],
-        ([]) => {
-            if (active.value !== 'XPU') {
-                return;
-            }
-            // 表格数据和行内趋势入口共用这套筛选口径，先刷新表格再由行点击取 trend。
-            loadTableData();
+      );
+      
+      watch([() => currentStore.saleDate, filterValue, filterOtherValue, dimensionalEnum, active, pageNo, pageSize, currentSort], ([]) => {
+        if (active.value !== 'XPU') {
+          return;
         }
-    );
-};
+        xpuTable.value = [];
+        loadTableData();
+      }, {
+        immediate: true,
+      });
+  };
+
+
+
