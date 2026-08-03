@@ -1,5 +1,5 @@
 import { getCardModelAPI, getFlavorVcpuTypeAPI, getRegionTreeAPI } from '@/api/sale';
-import { defineStore } from 'pinia';
+import { defineStore, storeToRefs } from 'pinia';
 import { computed, reactive, ref } from 'vue';
 
 const changeRes = (regionTree) => {
@@ -18,11 +18,10 @@ const changeRes = (regionTree) => {
   }))
 }
 
-// 全局 region 筛选
-export const filterValue = ref({});
-export const filterOtherValue = ref({});
-
 export const useSaleFilterStore = defineStore('saleFilter', () => {
+  // 公共 Region 与详情专属筛选统一由 Pinia 管理，避免热更新后状态实例分离。
+  const filterValue = ref({});
+  const filterOtherValue = ref({});
   const filterConfig = [
     {
       key: 'area',
@@ -97,6 +96,8 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
   loadRegionTreeData();
 
   return {
+    filterValue,
+    filterOtherValue,
     filterConfig,
     filterOptions,
     loadRegionTreeData,
@@ -108,6 +109,7 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
 export const useSaleDetailStore = (active) => {
   const saleFilterStore = useSaleFilterStore();
   const { filterConfig: regionFilterConfig, filterOptions } = saleFilterStore;
+  const { filterOtherValue } = storeToRefs(saleFilterStore);
 
   const ecsFilterConfig = [
     {

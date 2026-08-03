@@ -1,3 +1,4 @@
+import { storeToRefs } from 'pinia';
 import { computed, reactive, ref, watch } from 'vue';
 import { useCurrentDate } from '@/views/useCurrentDate';
 import obsDetailResponse from '@/api/obsDetail.json';
@@ -6,6 +7,9 @@ import obsTrendResponse from '@/api/obsTrend.json';
 import xpuDetailResponse from '@/api/xpuDetail.json';
 import xpuPageResponse from '@/api/xpuPage.json';
 import xpuTrendResponse from '@/api/xpuTrend.json';
+import { useSaleFilterStore } from '../saleHome/useSaleFilter';
+
+const { filterOtherValue, filterValue } = storeToRefs(useSaleFilterStore());
 
 function debounce(fn, delay) {
     let timer = null;
@@ -118,10 +122,6 @@ export const tableDataSummary = ref({});
 export const directoryTreeList = ref([]);
 export const resourceTypeList = ref([]);
 export const directoryTreeLoading = ref(false);
-// 顶部公共筛选值，主要包含大区和 Region。
-export const filterValue = ref({});
-// 资源类型自己的筛选值，XPU 卡类型、OBS 存储类型等放这里。
-export const filterOtherValue = ref({});
 export const leftCardData = reactive({
     ecs: {},
     obs: {},

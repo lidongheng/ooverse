@@ -1083,7 +1083,7 @@ function filterAzOptionsByRegions(options, selectedRegions) {
 
   return options.filter((item) => {
     const azName = String(item.label ?? item.value ?? '');
-    return regionLabels.some((region) => region === item.areaName || azName || azName.startsWith(region));
+    return regionLabels.some((region) => region === item.areaName || azName.startsWith(region));
   });
 }
 

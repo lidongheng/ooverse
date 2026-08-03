@@ -166,6 +166,52 @@ const SALE_REGION_TREE_RESPONSE = {
   ],
 }
 
-export async function getSaleRegionTreeAPI() {
+const FLAVOR_VCPU_TYPE_RESPONSE = {
+  status: 200,
+  message: 'SUCCESS',
+  messageEn: 'SUCCESS',
+  data: {
+    flavorVcpuTypeList: [
+      { flavorVcpuType: '32U' },
+      { flavorVcpuType: '64U' },
+    ],
+    flavorGenerationItem: [
+      {
+        flavorFamily: 'Intel',
+        item: [
+          { flavorGeneration: 'V5' },
+          { flavorGeneration: 'V6' },
+        ],
+      },
+      {
+        flavorFamily: 'Kunpeng',
+        item: [
+          { flavorGeneration: 'V1' },
+          { flavorGeneration: 'V2' },
+        ],
+      },
+    ],
+  },
+}
+
+const CARD_MODEL_RESPONSE = {
+  status: 200,
+  message: 'SUCCESS',
+  messageEn: 'SUCCESS',
+  data: [
+    { cardModel: 'D310P' },
+    { cardModel: 'Vnt1' },
+  ],
+}
+
+export async function getRegionTreeAPI(_params) {
   return structuredClone(SALE_REGION_TREE_RESPONSE)
+}
+
+export async function getFlavorVcpuTypeAPI(_params) {
+  return structuredClone(FLAVOR_VCPU_TYPE_RESPONSE)
+}
+
+export async function getCardModelAPI(_params) {
+  return structuredClone(CARD_MODEL_RESPONSE)
 }

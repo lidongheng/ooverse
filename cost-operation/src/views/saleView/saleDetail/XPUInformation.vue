@@ -26,19 +26,24 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
-import { filterOtherValue, keyInfor, xpuTable } from './useResourceData';
+import { useSaleFilterStore } from '../saleHome/useSaleFilter';
+import { keyInfor } from './useResourceData';
 
-const filterConfig = [
-  {
-    key: 'cardType',
-    label: '卡类型',
-    type: 'list',
-    optionKey: 'cardTypeList',
-    valueKey: 'cardTypeList',
+const { filterOtherValue } = storeToRefs(useSaleFilterStore());
+
+defineProps({
+  filterConfig: {
+    type: Array,
+    required: true,
   },
-];
+  filterOptions: {
+    type: Object,
+    required: true,
+  },
+});
 
 // XPU 卡片里的卡数统一用千分位展示，保持和表格数值风格一致。
 const formatCardCount = (value) => {
@@ -48,22 +53,6 @@ const formatCardCount = (value) => {
 
   return Number(value).toLocaleString();
 };
-
-// 卡类型筛选项由表格接口数据反推，后续真实接口新增卡型时不用同步改静态枚举。
-const filterOptions = computed(() => {
-  const cardTypeList = Array.from(
-    new Set(xpuTable.value.map((item) => item.cardModel))
-  ).map((item) => {
-    return {
-      label: item,
-      value: item,
-    };
-  });
-
-  return {
-    cardTypeList,
-  };
-});
 
 // 顶部四个指标卡保留截图文案，数值接入 XPU detail 接口状态。
 const xpuMetrics = computed(() => {

@@ -11,12 +11,11 @@
           {{ distributionButtonText }}
         </button>
         <div class="filters">
-          <el-select model-value="全部" size="small">
-            <el-option label="全部" value="全部" />
-          </el-select>
-          <el-select model-value="全部" size="small">
-            <el-option label="全部" value="全部" />
-          </el-select>
+          <FilterDropdowns
+            v-model="filterOtherValue"
+            :options="filterOptions"
+            :filter-config="filterConfig"
+          />
         </div>
       </div>
     </div>
@@ -83,9 +82,25 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
 import CommonChart from '@/components/CommonChart.vue';
+import FilterDropdowns from '@/components/FilterDropdowns.vue';
+import { useSaleFilterStore } from '../saleHome/useSaleFilter';
 import { ecsBars, ecsGenerationMetrics, ecsMetrics } from './staticData';
+
+const { filterOtherValue } = storeToRefs(useSaleFilterStore());
+
+defineProps({
+  filterConfig: {
+    type: Array,
+    required: true,
+  },
+  filterOptions: {
+    type: Object,
+    required: true,
+  },
+});
 
 const showDistribution = ref(false);
 const barChartStyle = {
@@ -221,10 +236,6 @@ function createBarOption(item) {
 
 .filters {
   gap: 12px;
-}
-
-.filters :deep(.el-select) {
-  width: 128px;
 }
 
 .metric-grid {

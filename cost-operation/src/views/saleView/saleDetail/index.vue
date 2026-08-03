@@ -9,7 +9,10 @@
 
       <div class="right-panel">
         <template v-if="active === 'ECS'">
-          <ECSInformation />
+          <ECSInformation
+            :filter-config="filterConfig"
+            :filter-options="filterOptions"
+          />
           <ECSTable active="ECS" />
         </template>
         <template v-if="active === 'OBS'">
@@ -17,7 +20,10 @@
           <OBSTable active="OBS" />
         </template>
         <template v-if="active === 'XPU'">
-          <XPUInformation />
+          <XPUInformation
+            :filter-config="filterConfig"
+            :filter-options="filterOptions"
+          />
           <OBSTable active="XPU" />
         </template>
         <template v-if="active === 'network'">
@@ -40,9 +46,11 @@ import OBSInformation from './OBSInformation.vue';
 import OBSTable from './OBSTable.vue';
 import XPUInformation from './XPUInformation.vue';
 import NetworkInformation from './NetworkInformation.vue';
+import { useSaleDetailStore } from '../saleHome/useSaleFilter';
 
 const route = useRoute();
 const active = ref('');
+const { filterConfig, filterOptions } = useSaleDetailStore(active);
 
 watch(
   () => route.query.type,
