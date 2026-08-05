@@ -142,7 +142,7 @@
         </div>
 
         <template v-else>
-          <el-form-item prop="cloudServerCodes" required>
+          <el-form-item prop="cloudServerCodes">
             <template #label>
               <span class="form-item-title">
                 <span>云服务</span>
@@ -170,7 +170,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="Region" prop="regionCodes" required>
+          <el-form-item label="Region" prop="regionCodes">
             <section class="region-panel">
             <div class="region-toolbar">
               <label class="region-toolbar__label">区域</label>
@@ -408,6 +408,16 @@ const allRegionCodes = computed(() =>
 );
 const cloudServerApprover = computed(() => ownedCloudServers.value[0]?.userName);
 const isCxoRoleSelected = computed(() => isCxoRole(selectedRoleValue.value));
+const validatePermissionSelection = (_rule, _value, callback) => {
+  const hasSelectedPermission = form.cloudServerCodes.length > 0 || form.regionCodes.length > 0;
+
+  if (hasSelectedPermission) {
+    callback();
+    return;
+  }
+
+  callback(new Error('请选择云服务或 Region'));
+};
 const rules = computed(() => {
   if (isCxoRoleSelected.value) {
     return {
@@ -416,8 +426,7 @@ const rules = computed(() => {
   }
 
   return {
-    cloudServerCodes: [{ required: true, message: "请选择云服务", trigger: "change" }],
-    regionCodes: [{ required: true, message: "请选择Region", trigger: "change" }],
+    regionCodes: [{ validator: validatePermissionSelection, trigger: 'change' }],
     reason: [{ required: true, message: "请输入申请原因", trigger: "blur" }],
   };
 });
@@ -429,7 +438,7 @@ const permissionTooltip = computed(() => {
     return '可按云服务选择数据类型后发起权限申请';
   }
 
-  return '可选择云服务和 Region 后发起权限申请';
+  return '可选择云服务或 Region 后发起权限申请';
 });
 const ownedSecondaryPermissions = computed(() => {
   return ownedRegions.value;
@@ -683,7 +692,7 @@ const validateField = (field) => {
 
 const toggleCloudServer = (code) => {
   form.cloudServerCodes = toggleById(form.cloudServerCodes, code);
-  validateField("cloudServerCodes");
+  validateField('regionCodes');
 };
 
 const toggleRegion = (code) => {
