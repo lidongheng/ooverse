@@ -1,4 +1,3 @@
-import { storeToRefs } from 'pinia';
 import { computed, reactive, ref, watch } from 'vue';
 import { useCurrentDate } from '@/views/useCurrentDate';
 import obsDetailResponse from '@/api/obsDetail.json';
@@ -9,7 +8,9 @@ import xpuPageResponse from '@/api/xpuPage.json';
 import xpuTrendResponse from '@/api/xpuTrend.json';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter';
 
-const { filterOtherValue, filterValue } = storeToRefs(useSaleFilterStore());
+// 延迟到响应式数据被消费时再获取 store，避免模块加载早于 app.use(pinia)。
+const filterOtherValue = computed(() => useSaleFilterStore().filterOtherValue);
+const filterValue = computed(() => useSaleFilterStore().filterValue);
 
 function debounce(fn, delay) {
     let timer = null;

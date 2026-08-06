@@ -31,6 +31,15 @@
             <div class="area-cascade-column">
               <div class="column-title">{{ filter.columns[0].title }}</div>
               <div class="resource-scroll">
+                <label class="resource-row checked-row">
+                  <el-checkbox
+                    :model-value="isAllSelected(getAreaValue(filter.areaValueKey), getAreaRootOptions(filter))"
+                    :indeterminate="isIndeterminate(getAreaValue(filter.areaValueKey), getAreaRootOptions(filter))"
+                    @change="checked => toggleAreaAll(filter, filter.areaValueKey, getAreaRootOptions(filter), checked)"
+                  />
+                  <span>全部</span>
+                  <el-icon><ArrowRight /></el-icon>
+                </label>
                 <el-checkbox-group
                   :model-value="getAreaValue(filter.areaValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.areaValueKey, value)"
@@ -50,6 +59,15 @@
             <div class="area-cascade-column">
               <div class="column-title">{{ filter.columns[1].title }}</div>
               <div class="resource-scroll">
+                <label class="resource-row checked-row">
+                  <el-checkbox
+                    :model-value="isAllSelected(getAreaValue(filter.districtValueKey), getAreaDistrictOptions(filter))"
+                    :indeterminate="isIndeterminate(getAreaValue(filter.districtValueKey), getAreaDistrictOptions(filter))"
+                    @change="checked => toggleAreaAll(filter, filter.districtValueKey, getAreaDistrictOptions(filter), checked)"
+                  />
+                  <span>全部</span>
+                  <el-icon><ArrowRight /></el-icon>
+                </label>
                 <el-checkbox-group
                   :model-value="getAreaValue(filter.districtValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.districtValueKey, value)"
@@ -69,6 +87,14 @@
             <div class="area-cascade-column">
               <div class="column-title">{{ filter.columns[2].title }}</div>
               <div class="resource-scroll">
+                <label class="resource-row checked-row">
+                  <el-checkbox
+                    :model-value="isAllSelected(getAreaValue(filter.regionValueKey), getAreaRegionOptions(filter))"
+                    :indeterminate="isIndeterminate(getAreaValue(filter.regionValueKey), getAreaRegionOptions(filter))"
+                    @change="checked => toggleAreaAll(filter, filter.regionValueKey, getAreaRegionOptions(filter), checked)"
+                  />
+                  <span>全部</span>
+                </label>
                 <el-checkbox-group
                   :model-value="getAreaValue(filter.regionValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.regionValueKey, value)"
@@ -1334,36 +1360,50 @@ function getAreaCurrentValue() {
 }
 
 function setAreaValue(filter, key, value) {
+  const previousValue = getAreaValue(key);
   areaValueMap.value[key] = value;
   if (key === filter.areaValueKey) {
-    syncAreaSelection(filter);
+    syncAreaSelection(filter, previousValue);
   }
   if (key === filter.districtValueKey) {
-    syncDistrictSelection(filter);
+    syncDistrictSelection(filter, previousValue);
   }
 }
 
-function syncAreaSelection(filter) {
+function toggleAreaAll(filter, key, options, checked) {
+  const optionValues = options.map(item => item.value);
+  const optionValueSet = new Set(optionValues);
+  const values = checked
+    ? mergeValues(getAreaValue(key), optionValues)
+    : getAreaValue(key).filter(item => !optionValueSet.has(item));
+  setAreaValue(filter, key, values);
+}
+
+function syncAreaSelection(filter, previousValue) {
   const selectedArea = getAreaValue(filter.areaValueKey);
+  const { added } = getValueChange(selectedArea, previousValue);
+  const addedDistrictValues = added.flatMap(area => getAreaChildren(filter, area));
   areaActive.value[filter.key] = getFirstActiveValue(selectedArea, getAreaRootOptions(filter));
   const districtOptions = getAreaAllDistrictOptions(filter)
     .filter(item => selectedArea.some(area => getAreaChildren(filter, area).includes(item.value)));
-  areaValueMap.value[filter.districtValueKey] = keepValid(
-    getAreaValue(filter.districtValueKey),
-    districtOptions,
-    [],
+  const previousDistrictValue = getAreaValue(filter.districtValueKey);
+  // 新增父项时全选其后代，取消父项时只裁剪已失效的后代。
+  areaValueMap.value[filter.districtValueKey] = keepValueIntersection(
+    mergeValues(previousDistrictValue, addedDistrictValues),
+    districtOptions.map(item => item.value),
   );
-  syncDistrictSelection(filter);
+  syncDistrictSelection(filter, previousDistrictValue);
 }
 
-function syncDistrictSelection(filter) {
+function syncDistrictSelection(filter, previousValue) {
   const selectedDistrict = getAreaValue(filter.districtValueKey);
+  const { added } = getValueChange(selectedDistrict, previousValue);
+  const addedRegionValues = added.flatMap(district => getDistrictChildren(filter, district));
   const regionOptions = getAreaAllRegionOptions(filter)
     .filter(item => selectedDistrict.some(district => getDistrictChildren(filter, district).includes(item.value)));
-  areaValueMap.value[filter.regionValueKey] = keepValid(
-    getAreaValue(filter.regionValueKey),
-    regionOptions,
-    [],
+  areaValueMap.value[filter.regionValueKey] = keepValueIntersection(
+    mergeValues(getAreaValue(filter.regionValueKey), addedRegionValues),
+    regionOptions.map(item => item.value),
   );
   areaDistrictActive.value[filter.key] = getFirstActiveValue(selectedDistrict, getAreaDistrictOptions(filter));
 }
