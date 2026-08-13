@@ -24,6 +24,7 @@
     "filemanager-webpack-plugin": "^2.0.5",
     "less": "^4.0.0",
     "less-loader": "^8.0.0",
+    "postcss": "8.5.25",
     "postcss-pxtorem": "^6.1.0",
     "terser-webpack-plugin": "^5.3.9",
     "typescript": "~5.7.0"

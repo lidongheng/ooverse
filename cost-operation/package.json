@@ -51,7 +51,7 @@
     "less": "^4.0.0",
     "less-loader": "^8.0.0",
     "mapvgl": "1.0.0-beta.188",
-    "postcss": "8.4.41",
+    "postcss": "8.5.25",
     "postcss-px-to-viewport": "^1.1.1",
     "postcss-pxtorem": "^6.1.0",
     "svg-sprite-loader": "6.0.11",
