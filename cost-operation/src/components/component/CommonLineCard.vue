@@ -38,7 +38,7 @@ import RingRatio from './RingRatio.vue';
 import CommonChart from '@/components/CommonChart.vue';
 import { changeValueByScale } from '@/composables/autoLayout';
 import { mapToArray } from '@/utils';
-import { numberToENUS } from '@/shared/business/formatFunction';
+import { numberToENUS } from '@shared/business/formatFunction';
 
 const props = defineProps({
   forbidden: {
@@ -110,7 +110,7 @@ const chartOptions = computed(() => {
         data: sourceData.map((v, index) => {
           return {
             value: changeFn(v.value),
-            symbol: circle,
+            symbol: 'circle',
             showAllSymbol: true,
             symbolSize: changeValueByScale(8),
             itemStyle: {

@@ -45,6 +45,83 @@ export const getAxisData = (monthNumber) => {
   return data;
 }
 
+export const commonChartOptions = () => {
+  const xAxisData = getAxisData(6);
+
+  return {
+    grid: {
+      top: 18,
+      left: 15,
+      right: 20,
+      bottom: 8,
+    },
+    xAxis: {
+      show: false,
+      data: xAxisData,
+      boundaryGap: false,
+    },
+    yAxis: {
+      show: false,
+    },
+    tooltip: {
+      show: true,
+      backgroundColor: '#3a3e44',
+      borderColor: '#3a3e44',
+      textStyle: {
+        color: '#fff',
+      },
+      axisPointer: {
+        type: 'none',
+      },
+      trigger: 'axis',
+    },
+    series: [
+      {
+        type: 'line',
+        smooth: true,
+        showAllSymbol: true,
+        areaStyle: {},
+        labelLayout: {
+          hideOverlap: false,
+        },
+        lineStyle: {
+          width: 2,
+        },
+      },
+    ],
+  };
+};
+
+export const commonLabelPopover = (index, lastIndex) => {
+  const isLast = index === lastIndex;
+
+  return {
+    symbol: 'circle',
+    symbolSize: 8,
+    itemStyle: {
+      color: '#fff',
+      borderColor: '#6262a8',
+      borderWidth: 3,
+      opacity: isLast ? 1 : 0,
+    },
+    label: {
+      show: isLast,
+      position: 'top',
+      fontSize: 10,
+      color: 'rgba(53, 53, 117, 1)',
+      distance: 0,
+    },
+  };
+};
+
+export const sortTrend = (data) => {
+  const xAxisData = getAxisData(6);
+
+  return [...data].sort((first, second) => {
+    return xAxisData.indexOf(first.axisX) - xAxisData.indexOf(second.axisX);
+  });
+};
+
 const useHomeIndicatiorsDataData = () => {
   const currentStore = useCurrentDate();
   const loadAllData = () => {

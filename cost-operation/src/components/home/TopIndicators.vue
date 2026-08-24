@@ -80,16 +80,14 @@
 
 <script setup>
 import CommonChart from '@/components/CommonChart.vue';
-import SvgIcon from '@/components/SvgIcon.vue';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { toBillion, formatRateValue, formatterValue } from '@/utils';
 import {
   commonChartOptions,
   commonLabelPopover,
   sortTrend,
-  homoIndicatorsData,
-  cpuLightClass,
-} from '../hooks/useIndicators';
+  homoIndicatiorsData as homoIndicatorsData,
+} from '@/views/hooks/useIndicators';
 import { useRouter } from 'vue-router';
 import CommonIndicators from './CommonIndicators.vue';
 

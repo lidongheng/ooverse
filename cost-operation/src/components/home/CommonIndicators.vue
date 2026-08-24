@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import RingRatio from '@/views/costOperation/component/RingRatio.vue';
+import RingRatio from '../component/RingRatio.vue';
 
 const props = defineProps({
   value: {

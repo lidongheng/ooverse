@@ -11,7 +11,11 @@
         <span class="text mgl8">{{ title }}</span>
         <em v-if="!!remark" class="remark">{{ remark }}</em>
       </span>
-      <DetailButton v-if="hasDetail" v-bind="$attrs" v-on="$listeners" />
+      <DetailButton
+        v-if="hasDetail"
+        v-bind="$attrs"
+        @click="emit('detailClick')"
+      />
     </div>
     <slot></slot>
   </div>
@@ -22,7 +26,7 @@ import { computed } from 'vue';
 import SvgIcon from '@/components/SvgIcon.vue';
 import DetailButton from './DetailButton.vue';
 
-const emits = defineEmits([]);
+const emit = defineEmits(['detailClick']);
 const props = defineProps({
   title: {
     type: String,

@@ -123,7 +123,7 @@ import CommonLineCard from '../component/CommonLineCard.vue';
 import CommonTextCard from '../component/CommonTextCard.vue';
 import CommonProgressCard from '../component/CommonProgressCard.vue';
 import { formatRateValue, formatterValue, toBillion, toWan } from '@/utils';
-import { homeCardData } from '../hooks/useIndicators';
+import { homeCardData } from '@/views/hooks/useIndicators';
 
 const { t, locale } = useI18n();
 const state = ref();
