@@ -22,7 +22,8 @@
 
 <style lang="less" scoped>
 .home-layout {
-  min-height: 100vh;
+  height: calc(100vh - 64px);
+  min-height: 0;
   padding: 16px;
   box-sizing: border-box;
   background: #eef2fb;
@@ -48,8 +49,9 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  grid-template-columns: 448px minmax(0, 1fr) 448px;
   gap: 12px;
+  overflow: hidden;
 }
 
 .home-left,

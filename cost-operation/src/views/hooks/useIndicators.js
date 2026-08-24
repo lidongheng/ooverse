@@ -343,7 +343,10 @@ export const fetchHomeCardData = (filters = {}) => {
         return;
       }
       homeCardData.recurringRevenue.commonComputing = res.data.commonComputing?.[0];
-      homeCardData.recurringRevenue.intelligentComputing = res.data.intelligentComputing?.[0];
+      // 智算接口返回空数组时不能覆盖已初始化的数据结构，否则模板读取 trends 会报错。
+      if (res.data.intelligentComputing.length > 0) {
+        homeCardData.recurringRevenue.intelligentComputing = res.data.intelligentComputing[0];
+      }
       homeCardData.recurringRevenue.externalCustomer = res.data.externalCustomer?.[0];
       homeCardData.recurringRevenue.internalCustomer = res.data.internalCustomer?.[0];
     }
@@ -364,7 +367,10 @@ export const fetchHomeCardData = (filters = {}) => {
       return;
     }
     homeCardData.cost.commonComputing = res.data.commonComputing?.[0];
-    homeCardData.cost.intelligentComputing = res.data.intelligentComputing?.[0];
+    // 成本接口同样可能没有智算记录，保留初始化对象供图表正常渲染。
+    if (res.data.intelligentComputing.length > 0) {
+      homeCardData.cost.intelligentComputing = res.data.intelligentComputing[0];
+    }
     homeCardData.cost.externalCustomer = res.data.externalCustomer?.[0];
     homeCardData.cost.internalCustomer = res.data.internalCustomer?.[0];
   });

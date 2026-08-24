@@ -35,9 +35,12 @@ fetchHomeData();
 
 <style lang="less">
 .home-common-card {
-  width: 200px;
-  height: 160px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   padding: 16px 16px 16px 20px;
+  box-sizing: border-box;
   border-radius: 16px;
   box-shadow: 0px 2px 12px 0px rgba(53, 53, 117, 0.15);
   background: rgba(255, 255, 255, 0.75);

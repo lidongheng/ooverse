@@ -12,6 +12,10 @@ import { initializeApp as runAppInit, showInitError } from './plugins/init'
 import { setupTheme, initializeTheme } from './plugins/theme'
 import { registerDevTools } from './utils/devTools'
 import { useTargetNumStore } from './stores/targetNumStore'
+import { setDocumentFontSize } from './composables/autoLayout';
+
+// 首次加载立即应用 1920×1080 设计基准，后续尺寸变化由现有 resize 监听处理。
+setDocumentFontSize();
 
 // 提前初始化主题系统
 initializeTheme()

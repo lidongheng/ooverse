@@ -266,6 +266,11 @@ const totalCostOptions = computed(() => {
   align-items: center;
   justify-content: space-between;
   padding: 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 12px rgba(53, 53, 117, 0.15);
   color: rgba(53, 53, 117, 1);
   .w-419 {
     width: 419px;
