@@ -1,229 +1,148 @@
 <template>
-  <div class="information-panel">
-    <div class="metric-row">
-      <div
-        v-for="item in obsMetrics"
-        :key="item.title"
-        class="metric-card"
-      >
-        <div class="metric-title">▣ {{ item.title }}</div>
-        <div class="metric-value">
-          {{ item.value }}<span>{{ item.unit }} ▲{{ item.trend }}</span>
+  <div class="container">
+    <div class="title">
+      <div class="section-title">
+        <SvgIcon iconName="xpod-1" class="triangle-icon" :style="{ width: 20, height: 20 }" />
+        <span class="title-text">关键信息</span>
+      </div>
+      <slot name="filter"></slot>
+    </div>
+    <div class="info">
+      <div class="item" v-for="(item, index) in infors" :key="item.title">
+        <div class="item-top">
+          <SvgIcon :iconName="item.iconName" :style="{ width: 20, height: 20 }" />
+          <span class="name">{{ item.title }}</span>
+          <span class="unit">(PB)</span>
+        </div>
+        <div class="line"></div>
+        <div class="item-bottom">
+          <span class="value">
+            {{ permissionTable.obs ? formatNumToLocalString(item.value) : '**' }}
+          </span>
+          <RingRatio
+            v-if="permissionTable.obs"
+            class="mgt10"
+            label="较上月"
+            data="Number(item.rate)"
+            unit=""
+            upGreen="false"
+            noColor="true"
+          ></RingRatio>
+          <span v-else>**</span>
         </div>
       </div>
-    </div>
-
-    <div class="chart-section">
-      <div class="section-title">Region Top10</div>
-      <CommonChart
-        :options="stackOption"
-        :style="stackChartStyle"
-      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import CommonChart from '@/components/CommonChart.vue';
-import { keyInfor } from './useResourceData';
+import { ref, computed } from 'vue';
+import RingRatio from '@/views/costOperation/component/RingRatio.vue';
+import { formatNumToLocalString, formatterValue } from '@/utils';
+import { keyInfor, permissionTable } from './useResourceData.js';
 
-const stackChartStyle = {
-  width: 980,
-  height: 206,
-};
-
-// 后端容量字段以较小单位返回，UI 截图这里按 PB 展示。
-const formatCapacity = (value) => {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  return (Number(value) / 10000).toFixed(1);
-};
-
-// OBS detail 接口直接返回三个指标卡数值，不再从 trend 数组二次聚合。
-const obsMetrics = computed(() => {
+const infors = computed(() => {
   return [
     {
-      title: 'OBS可售量（PB）',
-      // totalSellableCapacity 是 obs/detail 的总可售量字段，表格 summary 不参与这里的展示。
-      value: formatCapacity(keyInfor.obs.totalSellableCapacity),
-      unit: '纳上月',
-      trend: formatCapacity(keyInfor.obs.totalSellableCapacityMom),
+      title: 'OBS可售量',
+      value: formatterValue(keyInfor.obs?.totalSellableCapacity, 1024),
+      rate: formatterValue(keyInfor.obs?.totalSellableCapacityMom, 1024),
+      iconName: 'luggage1',
     },
     {
-      title: '单AZ可售量（PB）',
-      value: formatCapacity(keyInfor.obs.azTotalSellableCapacity),
-      unit: '纳上月',
-      trend: formatCapacity(keyInfor.obs.azTotalSellableCapacityMom),
+      title: '单AZ可售量',
+      value: formatterValue(keyInfor.obs?.azTotalSellableCapacity, 1024),
+      rate: formatterValue(keyInfor.obs?.azTotalSellableCapacityMom, 1024),
+      iconName: 'luggage2',
     },
     {
-      title: '三AZ可售量（PB）',
-      value: formatCapacity(keyInfor.obs.threeAzTotalSellableCapacity),
-      unit: '纳上月',
-      trend: formatCapacity(keyInfor.obs.threeAzTotalSellableCapacityMom),
+      title: '三AZ可售量',
+      value: formatterValue(keyInfor.obs?.threeAzTotalSellableCapacity, 1024),
+      rate: formatterValue(keyInfor.obs?.threeAzTotalSellableCapacityMom, 1024),
+      iconName: 'luggage3',
     },
   ];
 });
-
-// Region Top10 使用 detail 接口的 topTenList，后端已完成排序和聚合。
-const obsStackBars = computed(() => {
-  if (!Array.isArray(keyInfor.obs.topTenList)) {
-    return [];
-  }
-
-  // topTenList 仍按接口原单位返回，进入图表前统一换算成 PB。
-  return keyInfor.obs.topTenList.map((item) => {
-    return {
-      name: item.regionName,
-      single: Number(formatCapacity(item.azTotalSellableCapacity)),
-      multi: Number(formatCapacity(item.threeAzTotalSellableCapacity)),
-    };
-  });
-});
-
-const stackOption = computed(() => ({
-  grid: {
-    left: 48,
-    right: 24,
-    top: 36,
-    bottom: 42,
-  },
-  legend: {
-    right: 10,
-    top: 4,
-    itemWidth: 9,
-    itemHeight: 9,
-    textStyle: {
-      color: '#5e5f91',
-      fontSize: 12,
-    },
-  },
-  xAxis: {
-    type: 'category',
-    data: obsStackBars.value.map((item) => item.name),
-    axisLabel: {
-      color: '#7c7da4',
-      fontSize: 11,
-    },
-    axisTick: {
-      show: false,
-    },
-    axisLine: {
-      lineStyle: {
-        color: '#eef0f8',
-      },
-    },
-  },
-  yAxis: {
-    type: 'value',
-    name: 'PB',
-    nameTextStyle: {
-      color: '#7c7da4',
-    },
-    axisLabel: {
-      color: '#7c7da4',
-    },
-    splitLine: {
-      lineStyle: {
-        color: '#edf0f8',
-      },
-    },
-  },
-  series: [
-    {
-      name: '单AZ',
-      type: 'bar',
-      stack: 'total',
-      barWidth: 30,
-      data: obsStackBars.value.map((item) => item.single),
-      itemStyle: {
-        color: '#7db8f0',
-      },
-      label: {
-        show: true,
-        color: '#fff',
-        fontSize: 10,
-      },
-    },
-    {
-      name: '三AZ',
-      type: 'bar',
-      stack: 'total',
-      barWidth: 30,
-      data: obsStackBars.value.map((item) => item.multi),
-      itemStyle: {
-        color: '#6d62bb',
-      },
-      label: {
-        show: true,
-        color: '#fff',
-        fontSize: 10,
-      },
-    },
-  ],
-}));
 </script>
 
-<style scoped lang="less">
-.information-panel {
-  min-width: 0;
-  padding: 18px 20px;
-  box-sizing: border-box;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 26px rgba(60, 65, 118, 0.08);
-}
+<style lang="less" scoped>
+.container {
+  width: 100%;
+  padding: 20px 24px 0px 24px;
+  .title {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
 
-.metric-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-}
+  .section-title {
+    .title-text {
+      color: rgba(51, 51, 107, 1);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 28px;
+      margin-left: 8px;
+    }
+  }
 
-.metric-card {
-  min-height: 92px;
-  padding: 8px 20px 8px 0;
-  border-right: 1px solid #eef0f8;
-}
-
-.metric-card:last-child {
-  border-right: 0;
-}
-
-.metric-title,
-.section-title {
-  color: #34356f;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.metric-value {
-  margin-top: 16px;
-  color: #333376;
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.metric-value span {
-  margin-left: 8px;
-  color: #77799e;
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.chart-section {
-  height: 230px;
-  margin-top: 12px;
-}
-
-.section-title {
-  height: 24px;
-}
-
-.chart-section :deep(.static-chart) {
-  height: calc(100% - 24px);
+  .info {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    .item {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 8px;
+      border-radius: 8px;
+      background: #f0f2fb;
+      padding: 12px 20px;
+      .item-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .item-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .line {
+        width: 100%;
+        height: 1px;
+        background: rgba(223, 228, 245);
+      }
+      .name {
+        color: rgba(51, 51, 107, 1);
+        font-family: Microsoft YaHei;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 24px;
+        letter-spacing: 0px;
+        text-align: left;
+      }
+      .unit {
+        color: rgba(98, 98, 168, 1);
+        font-family: Microsoft YaHei;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 18px;
+        letter-spacing: 0px;
+        text-align: left;
+      }
+      .value {
+        color: rgba(51, 51, 107, 1);
+        font-family: Arial;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 32px;
+        letter-spacing: 0px;
+        text-align: left;
+        margin-right: 5px;
+      }
+    }
+  }
 }
 </style>
