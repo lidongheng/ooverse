@@ -37,7 +37,26 @@
             changeFn: toWan,
             upGreen: false,
           }"
-        />
+        >
+          <template #extra>
+            <div class="server-region-summary">
+              <div class="server-region-summary__item">
+                <span>公网Region:</span>
+                <span class="server-region-summary__value">
+                  {{ toWan(homeCardData.eff.commonComputing.publicRegionServerNum) }}
+                </span>
+                <span>万台</span>
+              </div>
+              <div class="server-region-summary__item">
+                <span>非公网Region:</span>
+                <span class="server-region-summary__value">
+                  {{ toWan(homeCardData.eff.commonComputing.nonPublicRegionServerNum) }}
+                </span>
+                <span>万台</span>
+              </div>
+            </div>
+          </template>
+        </CommonLineCard>
         <CommonProgressCard
           :options="{
             label: 'CPU 使用率',
@@ -159,6 +178,27 @@ const props = defineProps({});
     height: 100%;
     min-width: 0;
     min-height: 0;
+  }
+}
+
+.server-region-summary {
+  margin-top: 6px;
+  color: #6262a8;
+  font-size: 12px;
+  line-height: 18px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  &__value {
+    margin-left: auto;
+    margin-right: 4px;
+    color: #353575;
+    font-family: Arial;
+    font-weight: 700;
   }
 }
 </style>

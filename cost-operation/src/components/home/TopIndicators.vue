@@ -60,6 +60,7 @@
       <div class="line"></div>
       <div class="w-419 flex-center">
         <CommonIndicators
+          class="server-indicator"
           :value="formatterValue(homoIndicatorsData.service.curValue, 10000)"
           :ratio-value="
             formatterValue(homoIndicatorsData.service.compareLastMonVal, 10000)
@@ -68,7 +69,26 @@
           ratio-unit="万台"
           unit="万台"
           icon-name="top-service"
-        />
+        >
+          <template #rightRatio>
+            <div class="server-region-summary">
+              <div class="server-region-summary__item">
+                <span>公网Region:</span>
+                <span class="server-region-summary__value">
+                  {{ formatterValue(homoIndicatorsData.service.publicRegionServerNum, 10000) }}
+                </span>
+                <span>万台</span>
+              </div>
+              <div class="server-region-summary__item">
+                <span>非公网Region:</span>
+                <span class="server-region-summary__value">
+                  {{ formatterValue(homoIndicatorsData.service.nonPublicRegionServerNum, 10000) }}
+                </span>
+                <span>万台</span>
+              </div>
+            </div>
+          </template>
+        </CommonIndicators>
         <CommonChart
           :style="{ width: 154, height: 98 }"
           :options="serviceOptions"
@@ -328,5 +348,59 @@ const totalCostOptions = computed(() => {
   position: absolute;
   top: 8px;
   right: 13px;
+}
+
+.server-region-summary {
+  position: relative;
+  margin-left: 8px;
+  padding-left: 8px;
+  color: #6262a8;
+  font-size: 12px;
+  line-height: 28px;
+
+  &::before {
+    position: absolute;
+    top: 50%;
+    left: -8px;
+    width: 8px;
+    border-top: 1px dashed #9e9ed0;
+    content: '';
+  }
+
+  &::after {
+    position: absolute;
+    top: 25%;
+    bottom: 25%;
+    left: 0;
+    border-left: 1px dashed #9e9ed0;
+    content: '';
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+
+    &::before {
+      position: absolute;
+      top: 50%;
+      left: -8px;
+      width: 8px;
+      border-top: 1px dashed #9e9ed0;
+      content: '';
+    }
+  }
+
+  &__value {
+    margin-left: 8px;
+    color: #353575;
+    font-family: Arial;
+    font-weight: 700;
+  }
+}
+
+:deep(.server-indicator .item-top-unit) {
+  white-space: nowrap;
 }
 </style>

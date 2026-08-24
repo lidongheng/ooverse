@@ -24,7 +24,9 @@
         <span>{{ options.ratioUnit }}</span>
       </template>
     </RingRatio>
+    <slot v-if="$slots.extra" name="extra"></slot>
     <CommonChart
+      v-else
       :class="{ chartRight: options.chartRight }"
       :options="chartOptions"
       :style="{ width: options.chartRight ? 250 : 156, height: options.chartRight ? 140 : 56 }"
