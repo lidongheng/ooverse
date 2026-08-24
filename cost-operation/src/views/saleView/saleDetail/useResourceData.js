@@ -1,16 +1,20 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { debounce } from '@shared/utils/utils.js';
 import { useCurrentDate as useCurrentStore } from '@/views/useCurrentDate';
-import {
-    getSalesDetailByObsAPI,
-    getSalesTableByObsAPI,
-    getSalesDetailByXpuAPI,
-    getSalesTableByXpuAPI,
-    getSalesDetailByEcsAPI,
-    getSalesTableByEcsAPI
-  } from '@/api/sales/index';
+import obsDetailResponse from '@/api/obsDetail.json';
+import obsPageResponse from '@/api/obsPage.json';
+import obsTrendResponse from '@/api/obsTrend.json';
+import xpuDetailResponse from '@/api/xpuDetail.json';
+import xpuPageResponse from '@/api/xpuPage.json';
+import xpuTrendResponse from '@/api/xpuTrend.json';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter';
+import {
+    ecsBars,
+    ecsGenerationMetrics,
+    ecsMetrics,
+    ecsTableRows,
+    resourceTree,
+} from './staticData';
 
 // 延迟到响应式数据被消费时再获取 store，避免模块加载早于 app.use(pinia)。
 const filterOtherValue = computed(() => useSaleFilterStore().filterOtherValue);
@@ -119,6 +123,110 @@ export const getSalesTableByXpuAPI = (_params) =>
 export const getSalesTrendByXpuAPI = (_params) =>
     mockRequest(xpuTrendResponse, normalizeTrendResponse);
 
+const toRawWanValue = (value) => Number.parseFloat(value) * 10000;
+
+// ECS 页面继续消费合并后的接口结构，Mock 数据仍统一在 composable 内转换。
+const toEcsTrendList = (items) =>
+    items.map((item) => ({
+        regionName: item.name,
+        totalSellableCapacity: toRawWanValue(item.value),
+    }));
+
+const toNamedResourceTree = (items) =>
+    items.map((item) => {
+        const nextItem = {
+            name: item.label,
+        };
+
+        if (item.children) {
+            nextItem.children = toNamedResourceTree(item.children);
+        }
+
+        return nextItem;
+    });
+
+const ecsDetailResponse = {
+    status: 200,
+    message: 'SUCCESS',
+    messageEn: 'SUCCESS',
+    data: {
+        totalSellableCapacityItem: {
+            value: ecsMetrics.reduce((total, item) => total + toRawWanValue(item.value), 0),
+            compareValue: toRawWanValue(ecsMetrics[0].trend),
+        },
+        icalcItem: {
+            itotalSellableCapacity: toRawWanValue(ecsMetrics[0].value),
+            compareValue: toRawWanValue(ecsMetrics[0].trend),
+            intelV5: toRawWanValue(ecsMetrics[0].specs[0].value),
+            intelV6: toRawWanValue(ecsMetrics[0].specs[1].value),
+            intelV7: toRawWanValue(ecsMetrics[0].specs[2].value),
+            intelV9: toRawWanValue(ecsMetrics[0].specs[3].value),
+            topCalcItems: toEcsTrendList(ecsBars[0].data),
+        },
+        acalcItem: {
+            atotalSellableCapacity: toRawWanValue(ecsMetrics[1].value),
+            compareValue: toRawWanValue(ecsMetrics[1].trend),
+            axdv6: toRawWanValue(ecsMetrics[1].specs[0].value),
+            axdv7: toRawWanValue(ecsMetrics[1].specs[1].value),
+            axdv8: toRawWanValue(ecsMetrics[1].specs[2].value),
+            axdv9: toRawWanValue(ecsMetrics[1].specs[3].value),
+            topCalcItems: toEcsTrendList(ecsBars[1].data),
+        },
+        kcalcItem: {
+            ktotalSellableCapacity: toRawWanValue(ecsMetrics[2].value),
+            compareValue: toRawWanValue(ecsMetrics[2].trend),
+            kunpengV1: toRawWanValue(ecsMetrics[2].specs[0].value),
+            kunpengV2: toRawWanValue(ecsMetrics[2].specs[1].value),
+            topCalcItems: toEcsTrendList(ecsBars[2].data),
+        },
+        operationV5PreviousItem: {
+            value: toRawWanValue(ecsGenerationMetrics[0].value),
+            compareValue: toRawWanValue(ecsGenerationMetrics[0].trend),
+        },
+        operationV6ToV8Item: {
+            value: toRawWanValue(ecsGenerationMetrics[1].value),
+            compareValue: toRawWanValue(ecsGenerationMetrics[1].trend),
+        },
+        operationV9Item: {
+            value: toRawWanValue(ecsGenerationMetrics[2].value),
+            compareValue: toRawWanValue(ecsGenerationMetrics[2].trend),
+        },
+        dirTreeList: toNamedResourceTree(resourceTree),
+        operationGenerationList: ecsGenerationMetrics.map((item) => ({
+            name: item.title,
+        })),
+    },
+};
+
+const ecsTableResponse = {
+    status: 200,
+    message: 'SUCCESS',
+    messageEn: 'SUCCESS',
+    data: {
+        pageInfo: {
+            totalNum: ecsTableRows.length,
+            pageNo: 1,
+            pageSize: 50,
+            records: ecsTableRows,
+        },
+        summary: {
+            sellableCapacity: ecsTableRows.reduce(
+                (total, item) => total + Number(item.stock.replaceAll(',', '')),
+                0
+            ),
+        },
+    },
+};
+
+export const getSalesDetailByEcsAPI = (_params) =>
+    mockRequest(ecsDetailResponse, cloneResponse);
+
+export const getSalesTableByEcsAPI = (_params) =>
+    mockRequest(ecsTableResponse, cloneResponse);
+
+// XPU 行内趋势展开后写入这里，避免覆盖顶部详情数据。
+export const xpuTrendData = ref([]);
+
 export const tableDataSummary = ref({});
 export const directoryTreeList = ref([]);
 export const resourceTypeList = ref([]);
@@ -178,6 +286,8 @@ export const currentSort = ref({
 
 export const storageMode = ref([]);
 
+export const rangeValue = ref('全部');
+
 export const dimensionalEnum = ref("");
 
 export const generationDirTreeList = computed(() => {
@@ -199,6 +309,49 @@ const regionList = computed(() => {
 const cardTypeList = computed(() => {
   return filterOtherValue.value.cardTypeList ?? [];
 });
+
+const dimensionalEnumMap = {
+  全部: '',
+  大区: 'area',
+  Region: 'region',
+  AZ: 'az',
+};
+
+const toArrayValue = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+
+  return [value];
+};
+
+// 行内趋势请求只提交当前范围粒度对应的维度字段。
+export const buildDimensionParams = ({ areaName, regionId, azId }) => {
+  const params = {
+    dimensionalEnum: dimensionalEnumMap[rangeValue.value],
+    areaName: [],
+    regionId: [],
+    azId: [],
+  };
+
+  if (rangeValue.value === '大区') {
+    params.areaName = toArrayValue(areaName);
+  }
+
+  if (rangeValue.value === 'Region') {
+    params.regionId = toArrayValue(regionId);
+  }
+
+  if (rangeValue.value === 'AZ') {
+    params.azId = toArrayValue(azId);
+  }
+
+  return params;
+};
 
 const applyLevel = (arr = [], pItem = {}, plevel = 0, levelKeyMap = { 0: 'calcType', 1: 'family', 2: 'generation' }) => {
   const _levelKeyMap = levelKeyMap;
@@ -582,6 +735,5 @@ export const useResoureDetailByXPU = (active) => {
         immediate: true,
       });
   };
-
 
 

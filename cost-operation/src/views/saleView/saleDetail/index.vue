@@ -1,15 +1,10 @@
 <template>
   <div class="common-page-padding">
-    <SaleCommonTitle title="可售资源"
-      iconName="sale-detail-1"
-      :ecsTime="homeData.ecsTime"
-      :obsTime="homeData.obsTime"
-      :xpuTime="homeData.xpuTime"
-    />
+    <CommonTitle title="可售资源" iconName="sale-detail-1" />
     
     <div class="sale-detail-layout">
       <div class="left-card">
-        <LeftOverview2 v-model:active="active" />
+        <LeftOverview v-model:active="active" />
       </div>
       
       <div class="right-panel">
@@ -39,21 +34,15 @@
             </template>
           </OBSInformation>
           <div class="scroll-box">
-            <OBSTopRegionTrend></OBSTopRegionTrend>
             <OBSTable :active="active"></OBSTable>
           </div>
         </template>
         <template v-if="active === 'XPU'">
-          <XPUInformation>
-            <template #filter>
-              <FilterDropdowns
-                v-model="filterOtherValue"
-                :options="filterOptions"
-                :filter-config="filterConfig"
-              />
-            </template>
-          </XPUInformation>
-          <OBSTable></OBSTable>
+          <XPUInformation
+            :filter-config="filterConfig"
+            :filter-options="filterOptions"
+          />
+          <OBSTable :active="active"></OBSTable>
         </template>
         <template v-if="active === 'network'"></template>
       </div>
@@ -62,17 +51,16 @@
 </template>
 
 <script setup>
-import { ref, watch, toRefs } from 'vue';
+import { ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import SaleCommonTitle from '@/views/saleView/component/SaleCommonTitle.vue';
-import LeftOverview2 from '@/views/saleView/saleDetail/LeftOverview2.vue';
+import CommonTitle from '@/components/home/CommonTitle.vue';
+import LeftOverview from '@/views/saleView/saleDetail/LeftOverview.vue';
 import ECSInformation from '@/views/saleView/saleDetail/ECSInformation.vue';
-import ECSDaiCi from '@/views/saleView/saleDetail/OBSInfoDaici.vue';
+import ECSDaiCi from '@/views/saleView/saleDetail/ECSInfoDaici.vue';
 import OBSInformation from '@/views/saleView/saleDetail/OBSInformation.vue';
 import XPUInformation from '@/views/saleView/saleDetail/XPUInformation.vue';
 import ECSTable from '@/views/saleView/saleDetail/ECSTable.vue';
 import OBSTable from '@/views/saleView/saleDetail/OBSTable.vue';
-import OBSTopRegionTrend from '@/views/saleView/saleDetail/OBSTopRegionTrend.vue';
 import { useRoute } from 'vue-router';
 import {
   useResoureDetailByECS,
@@ -86,15 +74,10 @@ import {
   isCollapsed,
 } from './useResourceData';
 import { useSaleDetailStore, useSaleFilterStore } from '../saleHome/useSaleFilter.js';
-import { saleDetailActive } from '@/views/costOpertion/hooks/useAIPage';
-import { useSaleHomeData, homeData } from '../saleHome/useSaleHomeData.js';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
 
 const route = useRoute();
 const active = ref(route.query.type || 'ECS');
-saleDetailActive.value = active.value;
-
-useSaleHomeData();
 
 const { filterOtherValue } = storeToRefs(useSaleFilterStore());
 const { filterConfig, filterOptions } = useSaleDetailStore(active);
@@ -104,7 +87,6 @@ useResoureDetailByOBS(active);
 useResoureDetailByXPU(active);
 
 watch(active, () => {
-  saleDetailActive.value = active.value;
   pageNo.value = 1;
   pageSize.value = 50;
   filterOtherValue.value = active.value === 'ECS' ? { resourceType: ['32U'] } : {};
@@ -191,4 +173,3 @@ watch(active, () => {
   background: rgba(255, 255, 255, 0.5);
 }
 </style>
-

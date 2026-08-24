@@ -37,7 +37,8 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import RingRatio from '@/views/costOperation/component/RingRatio.vue';
+import SvgIcon from '@/components/SvgIcon.vue';
+import RingRatio from '@/components/component/RingRatio.vue';
 import { formatNumToLocalString, formatterValue } from '@/utils';
 import { keyInfor, permissionTable } from './useResourceData.js';
 

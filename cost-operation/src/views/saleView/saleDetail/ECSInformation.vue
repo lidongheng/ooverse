@@ -80,7 +80,6 @@
             </div>
           </div>
         </div>
-        <ECSTrend v-if="!isCollapsed" :chartData="item.chartData"></ECSTrend>
       </div>
     </div>
   </div>
@@ -88,9 +87,9 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { formatNumToLocalString, formatNumToLocalStringAndFiexd, formatterValue } from '@/utils';
+import SvgIcon from '@/components/SvgIcon.vue';
+import { formatNumToLocalString, formatterValue } from '@/utils';
 import { keyInfor, permissionTable, showCollapse, isCollapsed } from './useResourceData.js';
-import ECSTrend from './ECSTrend.vue';
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value;
@@ -436,5 +435,4 @@ const infors = computed(() => {
       }
     }
   }
-}
 </style>
