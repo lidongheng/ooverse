@@ -7,17 +7,18 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref, toRefs, computed, watch } from "vue";
-import * as echarts from "echarts";
-import worldJson from "@/assets/geo/world.geo.json";
+import { onMounted, onBeforeUnmount, ref, toRefs, computed, watch } from 'vue';
+import * as echarts from 'echarts';
+import worldJson from '@/assets/geo/world.geo.json';
 import { enrichSaleRegionWithCoords, indicators } from './useMap';
-import { getChartScale } from '@/composables/autoLayout/chartScale';
-import { homeData } from '../saleHome/useSaleHomeData';
+import { getChartScale } from '@/utils/chartScale';
+import { useSaleHomeData } from '../saleHome/useSaleHomeData';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter.js';
 import { getSaleRegionLabelConfig } from '@/config/saleRegionCoords';
 
 const filterStore = useSaleFilterStore();
 const { filterValue, filterOptions } = toRefs(filterStore);
+const { homeData } = useSaleHomeData();
 
 const regionData = computed(() => {
   const data = 
@@ -46,9 +47,9 @@ function shiftWorldGeoJSON(geojson) {
   const shifted = JSON.parse(JSON.stringify(geojson));
   shifted.features.forEach((feature) => {
     const { type, coordinates } = feature.geometry;
-    if (type === "Polygon") {
+    if (type === 'Polygon') {
       feature.geometry.coordinates = coordinates.map((ring) => processRing(ring));
-    } else if (type === "MultiPolygon") {
+    } else if (type === 'MultiPolygon') {
       feature.geometry.coordinates = coordinates.map((polygon) =>
         polygon.map((ring) => processRing(ring))
       );
@@ -80,7 +81,7 @@ function processRing(ring) {
   ]);
 }
 
-echarts.registerMap("world", shiftWorldGeoJSON(worldJson));
+echarts.registerMap('world', shiftWorldGeoJSON(worldJson));
 
 /** 散点坐标也需同样偏移 */
 function shiftLng(lng) {
@@ -103,7 +104,7 @@ function getEffectiveOffset(name, s) {
   if (override) {
     return { x: Math.round(override.x * s), y: Math.round(override.y * s) };
   }
-  const cfg = getRegionLabelConfig(name);
+  const cfg = getSaleRegionLabelConfig(name);
   return { x: Math.round(cfg.offset.x * s), y: Math.round(cfg.offset.y * s) };
 }
 
@@ -128,7 +129,7 @@ function computeLinePoints(ox, oy, labelCfg, s) {
     const useEndVertical = absOy > absOx * TAN_TURN;
     let bendX;
     let bendY;
-    if (labelCfg.lineLength !== null) {
+    if (labelCfg.lineLength !== undefined) {
       const L = labelCfg.lineLength * s;
       if (useEndVertical) {
         bendX = ox;
@@ -165,7 +166,7 @@ function computeLinePoints(ox, oy, labelCfg, s) {
 
   let bendX;
   let bendY;
-  if (labelCfg.lineLength !== null) {
+  if (labelCfg.lineLength !== undefined) {
     const L = labelCfg.lineLength * s;
     if (useVertical) {
       bendX = 0;
@@ -218,7 +219,7 @@ function eachIndicators({
     const textObj = {
       type: 'text',
       style: {
-        text: `{label${v.label}}{unit(${v.unit})}`,
+        text: `{label|${v.label}}{unit|(${v.unit})}`,
         x: startX,
         y: startY + index * itemHeight,
         textVerticalAlign: 'middle',
@@ -279,6 +280,8 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
   const padX = Math.round(8 * s);
   const padY = Math.round(4 * s);
   const borderR = Math.round(20 * s);
+  const rectW = Math.round(190 * s);
+  const rectH = Math.round(128 * s);
   const _ctx = document.createElement('canvas').getContext('2d');
   _ctx.font = `500 ${fontSize}px sans-serif`;
 
@@ -305,7 +308,7 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
     const labelCfg = getSaleRegionLabelConfig(item.name);
     const { x: ox, y: oy } = getEffectiveOffset(item.name, s);
     // 标签文本与宽度计算
-    const titleW = Math.ceil(ctx.measureText(item.name).width);
+    const titleW = Math.ceil(_ctx.measureText(item.name).width);
     const regionName = item.name;
     const linePoints = computeLinePoints(ox, oy, labelCfg, s);
     // 引导线（起点不变！）
@@ -395,7 +398,7 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
             textVerticalAlign: 'middle',
             fontWeight: 700,
             fill: '#fff',
-            fontSize: item.fontSize,
+            fontSize,
             opacity: item.opacity,
           },
         },
@@ -446,7 +449,7 @@ function buildOption() {
       name: item.name,
       value: [shiftLng(item.lng), item.lat, rateVal],
       itemStyle: {
-        color: GREEN_GRADIENT,
+        color,
         ...SHADOW,
         opacity: item.opacity,
       },
@@ -454,10 +457,10 @@ function buildOption() {
   });
 
   return {
-    backgroundColor: "#e7ebf8",
+    backgroundColor: '#e7ebf8',
 
     geo: {
-      map: "world",
+      map: 'world',
       roam: false,
       zoom: 0.7,
       top: 115,
@@ -467,8 +470,8 @@ function buildOption() {
       tooltip: { show: false },
       label: { show: false },
       itemStyle: {
-        areaColor: "#fefeff",
-        borderColor: "#e3e7f4",
+        areaColor: '#fefeff',
+        borderColor: '#e3e7f4',
         borderWidth: 1,
       },
       emphasis: {
@@ -479,10 +482,10 @@ function buildOption() {
     // 散点标记层
     series: [
       {
-        type: "scatter",
-        coordinateSystem: "geo",
+        type: 'scatter',
+        coordinateSystem: 'geo',
         data: scatterData,
-        symbol: "circle",
+        symbol: 'circle',
         symbolSize: Math.round(12 * s),
         label: { show: false },
         z: 150,
@@ -512,10 +515,10 @@ function buildOption() {
 
 function updateMap() {
   if (!chart) return;
-  chart.setOption(buildOption(), { replaceMerge: ["series", "graphic"] });
+  chart.setOption(buildOption(), { replaceMerge: ['series', 'graphic'] });
 }
 
-watch([regionData], (value) => {
+watch([regionData], () => {
   updateMap();
 });
 

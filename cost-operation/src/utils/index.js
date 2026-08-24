@@ -32,6 +32,13 @@ export const formatNumToLocalString = (num) => {
   return Number(num).toLocaleString('en-US');
 }
 
+export const formatNumToLocalStringAndFiexd = (value, fixed) => {
+  return Number(value).toLocaleString('en-US', {
+    minimumFractionDigits: fixed,
+    maximumFractionDigits: fixed,
+  });
+};
+
 export const formatRateValue = (value, fixed = 2) => {
   if (value === '**') {
     return '**';
@@ -95,6 +102,11 @@ export const toWan = (value) => {
   const unit = 10000;
   return formatterValue(value, unit);
 }
+
+export const toPb = (value) => {
+  const unit = 10000;
+  return formatterValue(value, unit);
+};
 
 // Map 结构转数组
 export const mapToArray = (obj) => {
