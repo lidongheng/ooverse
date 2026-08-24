@@ -20,10 +20,32 @@
 </template>
 
 <script setup>
-import HomeLayout from "@/components/home/HomeLayout.vue";
-import CommonTitle from "@/components/home/CommonTitle.vue";
-import TopIndicators from "@/components/home/TopIndicators.vue";
-import CommonService from "@/components/home/CommonService.vue";
-import Map from "@/components/home/Map.vue";
-import Customer from "@/components/home/Customer.vue";
+import Map from '@/components/home/Map.vue';
+import HomeLayout from '@/components/home/HomeLayout.vue';
+import TopIndicators from '@/components/home/TopIndicators.vue';
+import CommonService from '@/components/home/CommonService.vue';
+import Customer from '@/components/home/Customer.vue';
+import CommonTitle from '@/components/home/CommonTitle.vue';
+import { fetchHomeData } from './hooks/useIndicators';
+import { useCompareStore } from '@/stores/compareStore';
+
+useCompareStore().reset();
+fetchHomeData();
 </script>
+
+<style lang="less">
+.home-common-card {
+  width: 200px;
+  height: 160px;
+  padding: 16px 16px 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0px 2px 12px 0px rgba(53, 53, 117, 0.15);
+  background: rgba(255, 255, 255, 0.75);
+}
+</style>
+
+<style lang="less" scoped>
+.cost-operation {
+  background: rgba(238, 241, 250, 1);
+}
+</style>

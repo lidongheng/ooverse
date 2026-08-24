@@ -95,3 +95,15 @@ export const toWan = (value) => {
   const unit = 10000;
   return formatterValue(value, unit);
 }
+
+// Map 结构转数组
+export const mapToArray = (obj) => {
+  if (!obj) {
+    return [];
+  } else {
+    return Object.keys(obj).map((key) => ({
+      label: key,
+      value: obj[key] ?? 0,
+    }));
+  }
+};

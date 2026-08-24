@@ -1,77 +1,131 @@
 <template>
-  <div class="common-service">
-    <div class="service-title">服务入口</div>
-    <button type="button" class="service-button" @click="goTo('/generalCompute')">
-      <span class="service-name">TS</span>
-      <span class="service-desc">查看TYSL运营</span>
-    </button>
-    <button type="button" class="service-button" @click="goTo('/aiCompute')">
-      <span class="service-name">ZS</span>
-      <span class="service-desc">查看ZNSL运营</span>
-    </button>
+  <div class="flex-column">
+    <Card title="通算" @detailClick="router.push('./generalCompute')">
+      <div class="card-gap">
+        <CommonLineCard
+          :options="{
+            label: '流水',
+            unit: '亿元',
+            ratioUnit: '%',
+            value: toBillion(homeCardData.recurringRevenue.commonComputing.value),
+            ratioValue: formatRateValue(homeCardData.recurringRevenue.commonComputing.mom),
+            chartData: homeCardData.recurringRevenue.commonComputing.trends,
+            changeFn: toBillion,
+          }"
+        />
+        <CommonLineCard
+          :options="{
+            label: '成本',
+            unit: '亿元',
+            ratioUnit: '%',
+            value: toBillion(homeCardData.cost.commonComputing.value),
+            ratioValue: formatRateValue(homeCardData.cost.commonComputing.mom),
+            chartData: homeCardData.cost.commonComputing.trends,
+            changeFn: toBillion,
+            upGreen: false,
+          }"
+        />
+        <CommonLineCard
+          :options="{
+            label: '通算服务器',
+            unit: '万台',
+            value: toWan(homeCardData.eff.commonComputing.curValue),
+            ratioValue: homeCardData.eff.commonComputing.compareLastMonVal,
+            chartData: homeCardData.eff.commonComputing.trend,
+            ratioUnit: '台',
+            ratioFixed: 0,
+            changeFn: toWan,
+            upGreen: false,
+          }"
+        />
+        <CommonProgressCard
+          :options="{
+            label: 'CPU 使用率',
+            unit: '%',
+            ratioUnit: '%',
+            target: formatRateValue(homeCardData.operate.commonComputing?.targetVal),
+            value: formatRateValue(homeCardData.operate.commonComputing?.curValue),
+            ratioValue: formatRateValue(homeCardData.operate.commonComputing?.compareLastMonVal),
+            iconName: 'card-cpu',
+          }"
+        />
+      </div>
+    </Card>
+    <Card title="智算" @detailClick="router.push('./aiCompute')" iconName="aicompute">
+      <div class="card-gap">
+        <CommonLineCard
+          :options="{
+            label: '流水',
+            unit: '亿元',
+            ratioUnit: '%',
+            // value: toBillion(homeCardData.recurringRevenue.intelligentComputing.value),
+            // ratioValue: formatRateValue(homeCardData.recurringRevenue.intelligentComputing.mom),
+            value: '--',
+            ratioValue: '--',
+            chartData: homeCardData.recurringRevenue.intelligentComputing.trends,
+            changeFn: toBillion,
+          }"
+        />
+        <CommonLineCard
+          :options="{
+            label: '成本',
+            unit: '亿元',
+            ratioUnit: '%',
+            // value: toBillion(homeCardData.cost.intelligentComputing.value),
+            // ratioValue: formatRateValue(homeCardData.cost.intelligentComputing.mom),
+            value: '--',
+            ratioValue: '--',
+            chartData: homeCardData.cost.intelligentComputing.trends,
+            changeFn: toBillion,
+            upGreen: false,
+          }"
+        />
+        <CommonTextCard
+          :options="{
+            label: '昇腾卡数',
+            unit: '万卡',
+            ratioUnit: '',
+            value: toWan(homeCardData.eff.intelligentComputing.curValue),
+            ratioValue: toWan(homeCardData.eff.intelligentComputing.compareLastMonVal),
+            upGreen: false,
+          }"
+          :options2="{
+            label: '总算力数',
+            unit: 'EFlops',
+            ratioUnit: '',
+            value: formatterValue(homeCardData.eFlops.curValue, 1000000),
+            ratioValue: formatterValue(homeCardData.eFlops.compareLastMonVal, 1000000),
+            upGreen: false,
+          }"
+        />
+        <CommonProgressCard
+          :options="{
+            label: 'AI Core利用率',
+            unit: '%',
+            ratioUnit: '%',
+            target: formatRateValue(homeCardData.operate.intelligentComputing.targetVal),
+            value: formatRateValue(homeCardData.operate.intelligentComputing.curValue),
+            ratioValue: formatRateValue(homeCardData.operate.intelligentComputing.compareLastMonVal),
+            iconName: 'card-fenpeiIv',
+          }"
+        />
+      </div>
+    </Card>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
+import { ref } from 'vue';
+import router from '@/router';
+import { useI18n } from 'vue-i18n';
+import Card from '../component/Card.vue';
+import CommonLineCard from '../component/CommonLineCard.vue';
+import CommonTextCard from '../component/CommonTextCard.vue';
+import CommonProgressCard from '../component/CommonProgressCard.vue';
+import { formatRateValue, formatterValue, toBillion, toWan } from '@/utils';
+import { homeCardData } from '../hooks/useIndicators';
 
-const router = useRouter();
-
-function goTo(path) {
-  router.push(path);
-}
+const { t, locale } = useI18n();
+const state = ref();
+const props = defineProps({});
 </script>
-
-<style lang="less" scoped>
-.common-service {
-  height: 100%;
-  padding: 12px;
-  box-sizing: border-box;
-  border-radius: 8px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.service-title {
-  height: 24px;
-  line-height: 24px;
-  color: #353575;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.service-button {
-  height: 68px;
-  padding: 10px 12px;
-  border: 1px solid #c8c8e8;
-  border-radius: 6px;
-  background: #f7f8fd;
-  color: #353575;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 6px;
-  text-align: left;
-}
-
-.service-button:hover {
-  border-color: #7171a8;
-  background: #eef2ff;
-}
-
-.service-name {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 20px;
-}
-
-.service-desc {
-  color: #7171a8;
-  font-size: 12px;
-  line-height: 16px;
-}
-</style>
