@@ -13,7 +13,7 @@
       <Map />
     </template>
     <template #right>
-      <Customer />
+      <XpuNetResourceCard />
     </template>
   </HomeLayout>
 </template>
@@ -24,5 +24,5 @@ import CommonTitle from "@/components/home/CommonTitle.vue";
 import TopIndicators from "@/components/home/TopIndicators.vue";
 import SaleService from "@/components/home/SaleService.vue";
 import Map from '@/views/saleView/map/Map.vue';
-import Customer from "@/components/home/Customer.vue";
+import XpuNetResourceCard from "./XpuNetResourceCard.vue";
 </script>
