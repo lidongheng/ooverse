@@ -41,6 +41,7 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
     },
   ];
   const filterLoading = ref(false);
+  let regionTreePromise = null;
 
   const filterOptions = reactive({
     regionNameList: [],
@@ -57,7 +58,7 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
       regionName: [],
       areaName: []
     };
-    getRegionTreeAPI(params).then((res) => {
+    regionTreePromise = getRegionTreeAPI(params).then((res) => {
       if (res.status === 403) {
         return;
       }
@@ -65,6 +66,7 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
       filterOptions.regionAreaTree = regionAreaTree;
       setDefaultFilterValues();
     });
+    return regionTreePromise;
   };
 
   // 设置默认勾选所有
@@ -93,6 +95,28 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
     filterLoading.value = false;
   };
 
+  const selectAreaWithChildren = async (areaName) => {
+    if (regionTreePromise) {
+      await regionTreePromise;
+    }
+
+    const area = filterOptions.regionAreaTree.find((item) => {
+      return item.children?.some((district) => district.value === areaName);
+    });
+    const district = area?.children?.find((item) => item.value === areaName);
+    if (!area || !district) {
+      return false;
+    }
+
+    filterValue.value = {
+      ...filterValue.value,
+      insideOutside: [area.value],
+      areaName: [district.value],
+      regionName: district.children.map((region) => region.value)
+    };
+    return true;
+  };
+
   loadRegionTreeData();
 
   return {
@@ -102,6 +126,7 @@ export const useSaleFilterStore = defineStore('saleFilter', () => {
     filterOptions,
     loadRegionTreeData,
     setDefaultFilterValues,
+    selectAreaWithChildren,
     filterLoading
   };
 });

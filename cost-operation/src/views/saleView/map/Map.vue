@@ -10,7 +10,7 @@
 import { onMounted, onBeforeUnmount, ref, toRefs, computed, watch } from 'vue';
 import * as echarts from 'echarts';
 import worldJson from '@/assets/geo/world.geo.json';
-import { enrichSaleRegionWithCoords, indicators } from './useMap';
+import { enrichSaleRegionWithCoords, indicators, useSaleMapNavigation } from './useMap';
 import { getChartScale } from '@/utils/chartScale';
 import { useSaleHomeData } from '../saleHome/useSaleHomeData';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter.js';
@@ -19,6 +19,7 @@ import { getSaleRegionLabelConfig } from '@/config/saleRegionCoords';
 const filterStore = useSaleFilterStore();
 const { filterValue, filterOptions } = toRefs(filterStore);
 const { homeData } = useSaleHomeData();
+const { jumpToEcsDetailByArea } = useSaleMapNavigation();
 
 const regionData = computed(() => {
   const data = 
@@ -95,6 +96,7 @@ const chartEl = ref(null);
 let chart = null;
 let resizeObserver = null;
 let isUnmounted = false;
+let draggedRegionName = '';
 
 // 拖拽偏移覆盖表：region name → { x, y }（未缩放基准值）
 const dragOverrides = ref(new Map());
@@ -329,6 +331,9 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
       draggable: true,
       cursor: 'move',
       z: 200,
+      ondrag() {
+        draggedRegionName = regionName;
+      },
       ondragend() {
         const newOx = this.position[0] - px;
         const newOy = this.position[1] - py;
@@ -352,6 +357,17 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
         }
         dragOverrides.value.set(regionName, config);
         updateMap();
+        setTimeout(() => {
+          if (draggedRegionName === regionName) {
+            draggedRegionName = '';
+          }
+        });
+      },
+      onclick() {
+        if (draggedRegionName === regionName) {
+          return;
+        }
+        jumpToEcsDetailByArea(regionName);
       },
       children: [
       // 卡片背景色块

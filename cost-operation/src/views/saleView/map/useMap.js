@@ -1,4 +1,6 @@
 import { formatNumToLocalStringAndFiexd, formatterValue, toPb, toWan } from '@/utils';
+import { useRouter } from 'vue-router';
+import { useSaleFilterStore } from '../saleHome/useSaleFilter.js';
 
 export const indicators = [
   {
@@ -34,3 +36,22 @@ export const indicators = [
 export function enrichSaleRegionWithCoords(item) {
   return { ...item, lng: Number(item.longitude), lat: Number(item.latitude), name: item.area };
 }
+
+export const useSaleMapNavigation = () => {
+  const router = useRouter();
+  const saleFilterStore = useSaleFilterStore();
+
+  const jumpToEcsDetailByArea = async (areaName) => {
+    await saleFilterStore.selectAreaWithChildren(areaName);
+    await router.push({
+      path: '/saleDetail',
+      query: {
+        type: 'ECS'
+      }
+    });
+  };
+
+  return {
+    jumpToEcsDetailByArea
+  };
+};
