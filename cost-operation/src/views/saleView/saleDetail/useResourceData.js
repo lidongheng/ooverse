@@ -306,8 +306,16 @@ const regionList = computed(() => {
   return filterValue.value.regionName ?? [];
 });
 
+const xpuCardModelList = ['A3', 'A2'];
+
 const cardTypeList = computed(() => {
-  return filterOtherValue.value.cardTypeList ?? [];
+  const selectedCardModelList = filterOtherValue.value.cardTypeList;
+  if (!selectedCardModelList) {
+    return [...xpuCardModelList];
+  }
+
+  // XPU 下钻只允许向后端传递当前支持的 A3、A2 卡型。
+  return selectedCardModelList.filter((cardModel) => xpuCardModelList.includes(cardModel));
 });
 
 const dimensionalEnumMap = {
@@ -735,5 +743,4 @@ export const useResoureDetailByXPU = (active) => {
         immediate: true,
       });
   };
-
 

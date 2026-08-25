@@ -22,12 +22,21 @@
         </div>
       </div>
     </div>
+
+    <div class="region-top-section">
+      <div class="region-top-title">▣ Region Top</div>
+      <CommonChart
+        :options="regionTopOptions"
+        :style="regionTopChartStyle"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
+import CommonChart from '@/components/CommonChart.vue';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter';
 import { keyInfor } from './useResourceData';
@@ -54,7 +63,7 @@ const formatCardCount = (value) => {
   return Number(value).toLocaleString();
 };
 
-// 顶部四个指标卡保留截图文案，数值接入 XPU detail 接口状态。
+// 顶部三个指标卡保留截图文案，数值接入 XPU detail 接口状态。
 const xpuMetrics = computed(() => {
   return [
     {
@@ -75,15 +84,116 @@ const xpuMetrics = computed(() => {
       unit: '纳上月',
       trend: formatCardCount(keyInfor.xpu.a2UnallocatedMom),
     },
-    {
-      title: 'A1待分配量（卡）',
-      // A1 有独立的 xpu/detail 字段，不能再用表格 summary 或趋势数据聚合。
-      value: formatCardCount(keyInfor.xpu.a1Unallocated),
-      unit: '纳上月',
-      trend: formatCardCount(keyInfor.xpu.a1UnallocatedMom),
-    },
   ];
 });
+
+const regionTopChartStyle = {
+  width: 1630,
+  height: 240,
+};
+
+const regionTopList = computed(() => {
+  if (!Array.isArray(keyInfor.xpu.topList)) {
+    return [];
+  }
+
+  return keyInfor.xpu.topList.slice(0, 10);
+});
+
+// Region Top 使用同一份 detail 响应，筛选刷新后 CommonChart 会同步更新。
+const regionTopOptions = computed(() => ({
+  color: ['#5b57b7', '#4b9fe5'],
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'shadow',
+    },
+  },
+  legend: {
+    top: 0,
+    right: 12,
+    itemWidth: 12,
+    itemHeight: 12,
+    textStyle: {
+      color: '#6262a8',
+      fontSize: 12,
+    },
+    data: ['A3', 'A2'],
+  },
+  grid: {
+    left: 54,
+    right: 24,
+    top: 36,
+    bottom: 48,
+  },
+  xAxis: {
+    type: 'category',
+    data: regionTopList.value.map((item) => item.regionName),
+    axisTick: {
+      show: false,
+    },
+    axisLine: {
+      lineStyle: {
+        color: '#e8eaf3',
+      },
+    },
+    axisLabel: {
+      interval: 0,
+      color: '#77799e',
+      fontSize: 11,
+    },
+  },
+  yAxis: {
+    type: 'value',
+    name: '卡',
+    nameTextStyle: {
+      color: '#77799e',
+      align: 'right',
+    },
+    axisLabel: {
+      color: '#77799e',
+    },
+    axisLine: {
+      show: false,
+    },
+    axisTick: {
+      show: false,
+    },
+    splitLine: {
+      lineStyle: {
+        color: '#eef0f7',
+      },
+    },
+  },
+  series: [
+    {
+      name: 'A3',
+      type: 'bar',
+      stack: 'xpu',
+      barMaxWidth: 46,
+      data: regionTopList.value.map((item) => Number(item.a3Unallocated)),
+      label: {
+        show: true,
+        position: 'inside',
+        color: '#fff',
+        fontSize: 12,
+      },
+    },
+    {
+      name: 'A2',
+      type: 'bar',
+      stack: 'xpu',
+      barMaxWidth: 46,
+      data: regionTopList.value.map((item) => Number(item.a2Unallocated)),
+      label: {
+        show: true,
+        position: 'inside',
+        color: '#fff',
+        fontSize: 12,
+      },
+    },
+  ],
+}));
 </script>
 
 <style scoped lang="less">
@@ -119,7 +229,7 @@ const xpuMetrics = computed(() => {
 
 .metric-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -146,6 +256,17 @@ const xpuMetrics = computed(() => {
   color: #77799e;
   font-size: 13px;
   font-weight: 400;
+}
+
+.region-top-section {
+  margin-top: 18px;
+}
+
+.region-top-title {
+  margin-bottom: 4px;
+  color: #34356f;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 </style>

@@ -201,8 +201,8 @@ const CARD_MODEL_RESPONSE = {
   message: 'SUCCESS',
   messageEn: 'SUCCESS',
   data: [
-    { cardModel: 'D310P' },
-    { cardModel: 'Vnt1' },
+    { cardModel: 'A3' },
+    { cardModel: 'A2' },
   ],
 }
 
