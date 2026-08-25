@@ -31,6 +31,7 @@
 
 <script setup>
 import RingRatio from '../component/RingRatio.vue';
+import SvgIcon from '../SvgIcon.vue';
 
 const props = defineProps({
   value: {
@@ -46,7 +47,7 @@ const props = defineProps({
     type: String,
   },
   ratioValue: {
-    type: Number,
+    type: [Number, String],
   },
   ratioUnit: {
     type: String,

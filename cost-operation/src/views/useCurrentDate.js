@@ -32,7 +32,6 @@ export const useCurrentDate = defineStore('currentMonth', {
     monthText: (state) => dayjs(state.saleDate).format('M月'),
     month: (state) => dayjs(state.date).format('YYYYMM'),
     saleMonth: (state) => dayjs(state.saleDate).format('YYYYMM'),
-    saleDate: (state) => dayjs(state.saleDate).format('YYYYMMDD'),
   },
 });
 

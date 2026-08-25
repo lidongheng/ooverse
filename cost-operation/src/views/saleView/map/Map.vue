@@ -96,7 +96,6 @@ const chartEl = ref(null);
 let chart = null;
 let resizeObserver = null;
 let isUnmounted = false;
-let draggedRegionName = '';
 
 // 拖拽偏移覆盖表：region name → { x, y }（未缩放基准值）
 const dragOverrides = ref(new Map());
@@ -313,11 +312,15 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
     const titleW = Math.ceil(_ctx.measureText(item.name).width);
     const regionName = item.name;
     const linePoints = computeLinePoints(ox, oy, labelCfg, s);
+    const [cardX, cardY] = getCardGroupPosition({ labelCfg, px, ox, py, oy, rectW, rectH });
+    let dragStartX = cardX;
+    let dragStartY = cardY;
     // 引导线（起点不变！）
     elements.push({
       type: 'polyline',
       id: `line-${item.name}`,
-      position: [px, py],
+      x: px,
+      y: py,
       shape: { points: linePoints },
       style: { stroke: '#b4b8ce', lineWidth: 1, lineDash: [4, 2], opacity: item.opacity },
       z: 100,
@@ -327,16 +330,23 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
     elements.push({
       type: 'group',
       id: `label-${regionName}`,
-      position: getCardGroupPosition({ labelCfg, px, ox, py, oy, rectW, rectH }),
+      x: cardX,
+      y: cardY,
       draggable: true,
       cursor: 'move',
       z: 200,
-      ondrag() {
-        draggedRegionName = regionName;
+      ondragstart() {
+        dragStartX = this.x;
+        dragStartY = this.y;
       },
       ondragend() {
-        const newOx = this.position[0] - px;
-        const newOy = this.position[1] - py;
+        // 与 ZRender 的点击阈值保持一致，轻微位移仍按点击处理且不重建 graphic。
+        const dragDistance = Math.hypot(this.x - dragStartX, this.y - dragStartY);
+        if (dragDistance <= 4) {
+          return;
+        }
+        const newOx = this.x - px;
+        const newOy = this.y - py;
         const config = { x: newOx / s, y: newOy / s };
         const halfW = rectW / s / 2;
         const halfH = rectH / s / 2;
@@ -357,16 +367,8 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
         }
         dragOverrides.value.set(regionName, config);
         updateMap();
-        setTimeout(() => {
-          if (draggedRegionName === regionName) {
-            draggedRegionName = '';
-          }
-        });
       },
       onclick() {
-        if (draggedRegionName === regionName) {
-          return;
-        }
         jumpToEcsDetailByArea(regionName);
       },
       children: [

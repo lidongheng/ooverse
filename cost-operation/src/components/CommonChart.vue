@@ -40,7 +40,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['chartReady', 'chartUpdaed', 'chartError']);
+const emit = defineEmits(['chartReady', 'chartUpdated', 'chartError']);
 
 const chartContainer = ref(null);
 let myChart = null;
