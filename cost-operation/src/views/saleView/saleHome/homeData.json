@@ -60,28 +60,28 @@
         ]
       },
       "xpu": {
-        "value": "0",
-        "compareValue": "-600",
+        "value": "41100",
+        "compareValue": "500",
         "trends": [
           {
             "month": "202603",
-            "value": "304"
+            "value": "36800"
           },
           {
             "month": "202604",
-            "value": "176"
+            "value": "38200"
           },
           {
             "month": "202605",
-            "value": "448"
+            "value": "39700"
           },
           {
             "month": "202606",
-            "value": "768"
+            "value": "40600"
           },
           {
             "month": "202607",
-            "value": "600"
+            "value": "41100"
           }
         ]
       },
@@ -277,74 +277,82 @@
         ]
       }
     },
-    "xpulIndicator": {
+    "xpuIndicator": {
       "allocatedVolume": {
-        "value": "0",
-        "compareValue": "-600",
+        "value": "41100",
+        "compareValue": "500",
         "trends": [
           {
             "month": "202603",
-            "value": "304"
+            "value": "36800"
           },
           {
             "month": "202604",
-            "value": "176"
+            "value": "38200"
           },
           {
             "month": "202605",
-            "value": "448"
+            "value": "39700"
           },
           {
             "month": "202606",
-            "value": "768"
+            "value": "40600"
           },
           {
             "month": "202607",
-            "value": "600"
+            "value": "41100"
           }
         ]
       },
       "a2AllocatedVolume": {
-        "value": "0",
-        "compareValue": "-568",
+        "value": "16700",
+        "compareValue": "5263",
         "trends": [
           {
             "month": "202603",
-            "value": "304"
+            "value": "12800"
           },
           {
             "month": "202604",
-            "value": "176"
+            "value": "13900"
           },
           {
             "month": "202605",
-            "value": "448"
+            "value": "14600"
           },
           {
             "month": "202606",
-            "value": "96"
+            "value": "11437"
           },
           {
             "month": "202607",
-            "value": "568"
+            "value": "16700"
           }
         ]
       },
       "a3AllocatedVolume": {
-        "value": "0",
-        "compareValue": "0",
+        "value": "21400",
+        "compareValue": "235",
         "trends": [
           {
+            "month": "202603",
+            "value": "18600"
+          },
+          {
+            "month": "202604",
+            "value": "19400"
+          },
+          {
             "month": "202605",
-            "value": "440"
+            "value": "20500"
           },
           {
             "month": "202606",
-            "value": "0"
+            "value": "21165"
           },
           {
             "month": "202607",
-            "value": "0"
+            "value": "21400"
           }
         ]
       }

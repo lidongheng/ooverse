@@ -24,6 +24,7 @@
             },
             upGreen: false,
             ratioLabel: '较上月',
+            chartRight: true,
           }"
         />
         <CommonLineCard
@@ -72,7 +73,6 @@
             },
             upGreen: false,
             ratioLabel: '较上月',
-            chartRight: true,
           }"
         />
       </div>
@@ -102,3 +102,44 @@ const jumpDetailPage = (type) => {
   });
 };
 </script>
+
+<style lang="less" scoped>
+.flex-column {
+  height: calc((100% - 12px) / 2);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  > .card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.card-gap {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  .home-common-card {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 16px 16px 16px 20px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px 0 rgba(53, 53, 117, 0.15);
+    background: rgba(255, 255, 255, 0.75);
+
+    &:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+}
+</style>
