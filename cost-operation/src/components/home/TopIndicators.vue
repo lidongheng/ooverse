@@ -393,7 +393,8 @@ const totalCostOptions = computed(() => {
   }
 
   &__value {
-    margin-left: 8px;
+    margin-left: auto;
+    margin-right: 4px;
     color: #353575;
     font-family: Arial;
     font-weight: 700;
