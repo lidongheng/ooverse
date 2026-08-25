@@ -34,6 +34,7 @@
             </template>
           </OBSInformation>
           <div class="scroll-box">
+            <OBSTopRegionTrend></OBSTopRegionTrend>
             <OBSTable :active="active"></OBSTable>
           </div>
         </template>
@@ -75,6 +76,7 @@ import {
 } from './useResourceData';
 import { useSaleDetailStore, useSaleFilterStore } from '../saleHome/useSaleFilter.js';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
+import OBSTopRegionTrend from './OBSTopRegionTrend.vue';
 
 const route = useRoute();
 const active = ref(route.query.type || 'ECS');
