@@ -22,21 +22,12 @@
         </div>
       </div>
     </div>
-
-    <div class="region-top-section">
-      <div class="region-top-title">▣ Region Top</div>
-      <CommonChart
-        :options="regionTopOptions"
-        :style="regionTopChartStyle"
-      />
-    </div>
   </div>
 </template>
 
 <script setup>
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
-import CommonChart from '@/components/CommonChart.vue';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
 import { useSaleFilterStore } from '../saleHome/useSaleFilter';
 import { keyInfor } from './useResourceData';
@@ -86,114 +77,6 @@ const xpuMetrics = computed(() => {
     },
   ];
 });
-
-const regionTopChartStyle = {
-  width: 1630,
-  height: 240,
-};
-
-const regionTopList = computed(() => {
-  if (!Array.isArray(keyInfor.xpu.topList)) {
-    return [];
-  }
-
-  return keyInfor.xpu.topList.slice(0, 10);
-});
-
-// Region Top 使用同一份 detail 响应，筛选刷新后 CommonChart 会同步更新。
-const regionTopOptions = computed(() => ({
-  color: ['#5b57b7', '#4b9fe5'],
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow',
-    },
-  },
-  legend: {
-    top: 0,
-    right: 12,
-    itemWidth: 12,
-    itemHeight: 12,
-    textStyle: {
-      color: '#6262a8',
-      fontSize: 12,
-    },
-    data: ['A3', 'A2'],
-  },
-  grid: {
-    left: 54,
-    right: 24,
-    top: 36,
-    bottom: 48,
-  },
-  xAxis: {
-    type: 'category',
-    data: regionTopList.value.map((item) => item.regionName),
-    axisTick: {
-      show: false,
-    },
-    axisLine: {
-      lineStyle: {
-        color: '#e8eaf3',
-      },
-    },
-    axisLabel: {
-      interval: 0,
-      color: '#77799e',
-      fontSize: 11,
-    },
-  },
-  yAxis: {
-    type: 'value',
-    name: '卡',
-    nameTextStyle: {
-      color: '#77799e',
-      align: 'right',
-    },
-    axisLabel: {
-      color: '#77799e',
-    },
-    axisLine: {
-      show: false,
-    },
-    axisTick: {
-      show: false,
-    },
-    splitLine: {
-      lineStyle: {
-        color: '#eef0f7',
-      },
-    },
-  },
-  series: [
-    {
-      name: 'A3',
-      type: 'bar',
-      stack: 'xpu',
-      barMaxWidth: 46,
-      data: regionTopList.value.map((item) => Number(item.a3Unallocated)),
-      label: {
-        show: true,
-        position: 'inside',
-        color: '#fff',
-        fontSize: 12,
-      },
-    },
-    {
-      name: 'A2',
-      type: 'bar',
-      stack: 'xpu',
-      barMaxWidth: 46,
-      data: regionTopList.value.map((item) => Number(item.a2Unallocated)),
-      label: {
-        show: true,
-        position: 'inside',
-        color: '#fff',
-        fontSize: 12,
-      },
-    },
-  ],
-}));
 </script>
 
 <style scoped lang="less">
@@ -257,16 +140,4 @@ const regionTopOptions = computed(() => ({
   font-size: 13px;
   font-weight: 400;
 }
-
-.region-top-section {
-  margin-top: 18px;
-}
-
-.region-top-title {
-  margin-bottom: 4px;
-  color: #34356f;
-  font-size: 17px;
-  font-weight: 700;
-}
-
 </style>

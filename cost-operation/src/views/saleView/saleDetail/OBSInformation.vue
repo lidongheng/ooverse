@@ -25,7 +25,7 @@
             label="较上月"
             data="Number(item.rate)"
             unit=""
-            upGreen="false"
+            :upGreen="false"
             noColor="true"
           ></RingRatio>
           <span v-else>**</span>
