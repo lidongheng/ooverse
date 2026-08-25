@@ -204,6 +204,128 @@ const CARD_MODEL_RESPONSE = {
   ],
 }
 
+const SALE_HOME_RESPONSE = {
+  status: 200,
+  message: 'SUCCESS',
+  messageEn: 'SUCCESS',
+  data: {
+    overviewIndicator: {},
+    ecsIndicator: {},
+    obsIndicator: {},
+    xpuIndicator: {},
+    networkIndicator: {},
+    ecsPermission: true,
+    networkPermission: true,
+    obsPermission: true,
+    xpuPermission: true,
+    areaPermission: ['欧洲', '华北', '华南'],
+    agentFrontSalesUrl: '',
+    agentFrontSalesIntellUrl: '',
+    regionalAvailableVolumeList: [
+      {
+        area: '欧洲',
+        longitude: 10,
+        latitude: 50,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '北部非洲',
+        longitude: 18,
+        latitude: 27,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '南部非洲',
+        longitude: 24,
+        latitude: -29,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '中东',
+        longitude: 45,
+        latitude: 27,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '亚太',
+        longitude: 108,
+        latitude: 4,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '华北',
+        longitude: 116.4,
+        latitude: 39.9,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '华东',
+        longitude: 121.5,
+        latitude: 31.2,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '华南',
+        longitude: 113.3,
+        latitude: 23.1,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '西部',
+        longitude: 87.6,
+        latitude: 43.8,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+      {
+        area: '拉美',
+        longitude: -58.4,
+        latitude: -15.6,
+        rate: 0,
+        ecsAvailableVolume: 0,
+        obsAvailableVolume: 0,
+        xpuAvailableVolume: 0,
+        networkAvailableVolume: null,
+      },
+    ],
+  },
+};
+
 export async function getRegionTreeAPI(_params) {
   return structuredClone(SALE_REGION_TREE_RESPONSE)
 }
@@ -214,4 +336,8 @@ export async function getFlavorVcpuTypeAPI(_params) {
 
 export async function getCardModelAPI(_params) {
   return structuredClone(CARD_MODEL_RESPONSE)
+}
+
+export async function getSaleHomeDataAPI(_params) {
+  return structuredClone(SALE_HOME_RESPONSE);
 }

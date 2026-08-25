@@ -1,12 +1,20 @@
 import { getSaleHomeDataAPI } from '@/api/sale';
-import { useCurrentStore } from '@/views/costOperation/hooks/useCurrentDate';
+import { useCurrentDate } from '@/views/useCurrentDate';
 import { ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSaleFilterStore } from './useSaleFilter';
-import { saleAgentIntellUrl, saleAgentUrl } from '@/views/costOperation/hooks/useAIPage';
-import { debounce } from '@/shared/utils/utils.js';
+import { saleAgentIntellUrl, saleAgentUrl } from './useAIPage';
 
-const { filterValue } = storeToRefs(useSaleFilterStore());
+// 销售概览筛选连续变化时，只执行最后一次数据加载。
+const debounce = (fn, delay) => {
+  let timer;
+
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+};
+
 export const homeData = ref({
   overviewIndicator: {},
   ecsIndicator: {},
@@ -24,7 +32,8 @@ export const homeData = ref({
 export const regionData = ref([]);
 
 export const useSaleHomeData = () => {
-  const currentStore = useCurrentStore();
+  const currentStore = useCurrentDate();
+  const { filterValue } = storeToRefs(useSaleFilterStore());
   const loadData = debounce(() => {
     const params = {
       date: currentStore.saleDate,
@@ -41,8 +50,8 @@ export const useSaleHomeData = () => {
       }
       if (res.status === 200) {
         homeData.value = res.data;
-        saleAgentUrl.value = res.data.agentFrontSalesUrl ?? "";
-        saleAgentIntellUrl.value = res.data.agentFrontSalesIntellUrl ?? "";
+        saleAgentUrl.value = res.data.agentFrontSalesUrl ?? '';
+        saleAgentIntellUrl.value = res.data.agentFrontSalesIntellUrl ?? '';
       }
     });
   }, 300);
@@ -50,6 +59,7 @@ export const useSaleHomeData = () => {
   watch([() => currentStore.saleDate, filterValue], loadData, { deep: true, immediate: true });
 
   return {
+    homeData,
     loadData,
   };
 };
