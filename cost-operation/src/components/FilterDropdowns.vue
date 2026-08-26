@@ -44,15 +44,15 @@
                   :model-value="getAreaValue(filter.areaValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.areaValueKey, value)"
                 >
-                  <label
+                  <div
                     v-for="item in getAreaRootOptions(filter)"
                     :key="item.value"
                     :class="['resource-row', { active: areaActive[filter.key] === item.value }]"
-                    @mouseenter="setAreaActive(filter, item.value)"
+                    @click="setAreaActive(filter, item.value)"
                   >
                     <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
                     <el-icon><ArrowRight /></el-icon>
-                  </label>
+                  </div>
                 </el-checkbox-group>
               </div>
             </div>
@@ -72,15 +72,15 @@
                   :model-value="getAreaValue(filter.districtValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.districtValueKey, value)"
                 >
-                  <label
+                  <div
                     v-for="item in getAreaDistrictOptions(filter)"
                     :key="item.value"
                     :class="['resource-row', { active: areaDistrictActive[filter.key] === item.value }]"
-                    @mouseenter="setAreaDistrictActive(filter, item.value)"
+                    @click="setAreaDistrictActive(filter, item.value)"
                   >
                     <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
                     <el-icon><ArrowRight /></el-icon>
-                  </label>
+                  </div>
                 </el-checkbox-group>
               </div>
             </div>
@@ -1383,7 +1383,6 @@ function syncAreaSelection(filter, previousValue) {
   const selectedArea = getAreaValue(filter.areaValueKey);
   const { added } = getValueChange(selectedArea, previousValue);
   const addedDistrictValues = added.flatMap(area => getAreaChildren(filter, area));
-  areaActive.value[filter.key] = getFirstActiveValue(selectedArea, getAreaRootOptions(filter));
   const districtOptions = getAreaAllDistrictOptions(filter)
     .filter(item => selectedArea.some(area => getAreaChildren(filter, area).includes(item.value)));
   const previousDistrictValue = getAreaValue(filter.districtValueKey);
@@ -1405,7 +1404,6 @@ function syncDistrictSelection(filter, previousValue) {
     mergeValues(getAreaValue(filter.regionValueKey), addedRegionValues),
     regionOptions.map(item => item.value),
   );
-  areaDistrictActive.value[filter.key] = getFirstActiveValue(selectedDistrict, getAreaDistrictOptions(filter));
 }
 
 function getAreaChildren(filter, areaValue) {
