@@ -158,6 +158,7 @@ export const useSaleDetailStore = (active) => {
         value: 'generation',
       },
       searchable: false,
+      confirmable: true,
       columns: [{ title: '资源族' }, { title: '资源代次' }],
     },
   ];
