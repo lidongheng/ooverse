@@ -33,8 +33,8 @@
               <div class="resource-scroll">
                 <label class="resource-row checked-row">
                   <el-checkbox
-                    :model-value="isAllSelected(getAreaValue(filter.areaValueKey), getAreaRootOptions(filter))"
-                    :indeterminate="isIndeterminate(getAreaValue(filter.areaValueKey), getAreaRootOptions(filter))"
+                    :model-value="isAreaAllSelected(filter, filter.areaValueKey, getAreaRootOptions(filter))"
+                    :indeterminate="isAreaAllIndeterminate(filter, filter.areaValueKey, getAreaRootOptions(filter))"
                     @change="checked => toggleAreaAll(filter, filter.areaValueKey, getAreaRootOptions(filter), checked)"
                   />
                   <span>全部</span>
@@ -47,10 +47,11 @@
                   <div
                     v-for="item in getAreaRootOptions(filter)"
                     :key="item.value"
-                    :class="['resource-row', { active: areaActive[filter.key] === item.value }]"
+                    :class="['resource-row', 'area-option-row', { active: areaActive[filter.key] === item.value }]"
                     @click="setAreaActive(filter, item.value)"
                   >
-                    <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
+                    <el-checkbox :value="item.value" @click.stop />
+                    <span>{{ item.label }}</span>
                     <el-icon><ArrowRight /></el-icon>
                   </div>
                 </el-checkbox-group>
@@ -61,8 +62,8 @@
               <div class="resource-scroll">
                 <label class="resource-row checked-row">
                   <el-checkbox
-                    :model-value="isAllSelected(getAreaValue(filter.districtValueKey), getAreaDistrictOptions(filter))"
-                    :indeterminate="isIndeterminate(getAreaValue(filter.districtValueKey), getAreaDistrictOptions(filter))"
+                    :model-value="isAreaAllSelected(filter, filter.districtValueKey, getAreaDistrictOptions(filter))"
+                    :indeterminate="isAreaAllIndeterminate(filter, filter.districtValueKey, getAreaDistrictOptions(filter))"
                     @change="checked => toggleAreaAll(filter, filter.districtValueKey, getAreaDistrictOptions(filter), checked)"
                   />
                   <span>全部</span>
@@ -75,10 +76,11 @@
                   <div
                     v-for="item in getAreaDistrictOptions(filter)"
                     :key="item.value"
-                    :class="['resource-row', { active: areaDistrictActive[filter.key] === item.value }]"
+                    :class="['resource-row', 'area-option-row', { active: areaDistrictActive[filter.key] === item.value }]"
                     @click="setAreaDistrictActive(filter, item.value)"
                   >
-                    <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
+                    <el-checkbox :value="item.value" @click.stop />
+                    <span>{{ item.label }}</span>
                     <el-icon><ArrowRight /></el-icon>
                   </div>
                 </el-checkbox-group>
@@ -89,8 +91,8 @@
               <div class="resource-scroll">
                 <label class="resource-row checked-row">
                   <el-checkbox
-                    :model-value="isAllSelected(getAreaValue(filter.regionValueKey), getAreaRegionOptions(filter))"
-                    :indeterminate="isIndeterminate(getAreaValue(filter.regionValueKey), getAreaRegionOptions(filter))"
+                    :model-value="isAreaAllSelected(filter, filter.regionValueKey, getAreaRegionOptions(filter))"
+                    :indeterminate="isAreaAllIndeterminate(filter, filter.regionValueKey, getAreaRegionOptions(filter))"
                     @change="checked => toggleAreaAll(filter, filter.regionValueKey, getAreaRegionOptions(filter), checked)"
                   />
                   <span>全部</span>
@@ -99,13 +101,14 @@
                   :model-value="getAreaValue(filter.regionValueKey)"
                   @update:model-value="value => setAreaValue(filter, filter.regionValueKey, value)"
                 >
-                  <label
+                  <div
                     v-for="item in getAreaRegionOptions(filter)"
                     :key="item.value"
-                    class="resource-row"
+                    class="resource-row area-option-row"
                   >
-                    <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
-                  </label>
+                    <el-checkbox :value="item.value" @click.stop />
+                    <span>{{ item.label }}</span>
+                  </div>
                 </el-checkbox-group>
               </div>
             </div>
@@ -188,8 +191,8 @@
               <div class="resource-scroll">
                 <label class="resource-row checked-row">
                   <el-checkbox
-                    :model-value="isAllSelected(getCustomValue(filter.parentValueKey), getCustomRootOptions(filter))"
-                    :indeterminate="isIndeterminate(getCustomValue(filter.parentValueKey), getCustomRootOptions(filter))"
+                    :model-value="isCustomCascadeAllSelected(filter)"
+                    :indeterminate="isCustomCascadeAllIndeterminate(filter)"
                     @change="checked => toggleCustomParentAll(filter, checked)"
                   />
                   <span>全部</span>
@@ -199,15 +202,16 @@
                   :model-value="getCustomValue(filter.parentValueKey)"
                   @update:model-value="value => setCustomParentValue(filter, value)"
                 >
-                  <label
+                  <div
                     v-for="item in getCustomRootOptions(filter)"
                     :key="item.value"
-                    :class="['resource-row', { active: customActive[filter.key] === item.value }]"
-                    @mouseenter="setCustomActive(filter.key, item.value)"
+                    :class="['resource-row', 'custom-cascade-option-row', { active: customActive[filter.key] === item.value }]"
+                    @click="setCustomActive(filter.key, item.value)"
                   >
-                    <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
+                    <el-checkbox :value="item.value" @click.stop />
+                    <span>{{ item.label }}</span>
                     <el-icon><ArrowRight /></el-icon>
-                  </label>
+                  </div>
                 </el-checkbox-group>
               </div>
             </div>
@@ -216,9 +220,9 @@
               <div class="resource-scroll">
                 <label class="resource-row checked-row">
                   <el-checkbox
-                    :model-value="isAllSelected(getCustomValue(filter.valueKey), getCustomLeafOptions(filter))"
-                    :indeterminate="isIndeterminate(getCustomValue(filter.valueKey), getCustomLeafOptions(filter))"
-                    @change="checked => toggleCustomAll(filter, filter.valueKey, getCustomLeafOptions(filter), checked)"
+                    :model-value="isAllSelected(getCustomValue(filter.valueKey), getCustomVisibleLeafOptions(filter))"
+                    :indeterminate="isIndeterminate(getCustomValue(filter.valueKey), getCustomVisibleLeafOptions(filter))"
+                    @change="checked => toggleCustomCascadeAll(filter, checked)"
                   />
                   <span>全部</span>
                 </label>
@@ -226,13 +230,14 @@
                   :model-value="getCustomValue(filter.valueKey)"
                   @update:model-value="value => setCustomValue(filter, filter.valueKey, value)"
                 >
-                  <label
-                    v-for="item in getCustomLeafOptions(filter)"
+                  <div
+                    v-for="item in getCustomVisibleLeafOptions(filter)"
                     :key="item.value"
-                    class="resource-row"
+                    class="resource-row custom-cascade-option-row"
                   >
-                    <el-checkbox :value="item.value">{{ item.label }}</el-checkbox>
-                  </label>
+                    <el-checkbox :value="item.value" @click.stop />
+                    <span>{{ item.label }}</span>
+                  </div>
                 </el-checkbox-group>
               </div>
             </div>
@@ -1171,6 +1176,10 @@ function getCustomLeafOptions(filter, parentValue) {
   return options.filter(item => item.label.toLowerCase().includes(keyword));
 }
 
+function getCustomVisibleLeafOptions(filter) {
+  return getCustomLeafOptions(filter, [customActive.value[filter.key]]);
+}
+
 function getCustomValue(key) {
   return customValueMap.value[key] ?? [];
 }
@@ -1225,6 +1234,36 @@ function toggleCustomAll(filter, key, options, checked) {
 function toggleCustomParentAll(filter, checked) {
   const values = checked ? getCustomRootOptions(filter).map(item => item.value) : [];
   setCustomParentValue(filter, values);
+}
+
+function toggleCustomCascadeAll(filter, checked) {
+  const optionValues = getCustomVisibleLeafOptions(filter).map(item => item.value);
+  const optionValueSet = new Set(optionValues);
+  if (checked) {
+    setCustomValue(filter, filter.valueKey, mergeValues(getCustomValue(filter.valueKey), optionValues));
+    return;
+  }
+  const values = getCustomValue(filter.valueKey).filter(item => !optionValueSet.has(item));
+  setCustomValue(filter, filter.valueKey, values);
+}
+
+function isCustomCascadeAllSelected(filter) {
+  const rootOptions = getCustomRootOptions(filter);
+  const leafOptions = getCustomLeafOptions(filter, rootOptions.map(item => item.value));
+  return isAllSelected(getCustomValue(filter.parentValueKey), rootOptions)
+    && isAllSelected(getCustomValue(filter.valueKey), leafOptions);
+}
+
+function isCustomCascadeAllIndeterminate(filter) {
+  const rootOptions = getCustomRootOptions(filter);
+  const leafOptions = getCustomLeafOptions(filter, rootOptions.map(item => item.value));
+  const optionCount = rootOptions.length + leafOptions.length;
+  const selectedRootCount = rootOptions
+    .filter(item => getCustomValue(filter.parentValueKey).includes(item.value)).length;
+  const selectedLeafCount = leafOptions
+    .filter(item => getCustomValue(filter.valueKey).includes(item.value)).length;
+  const selectedCount = selectedRootCount + selectedLeafCount;
+  return selectedCount > 0 && selectedCount < optionCount;
 }
 
 function setCustomVisible(filter, visible) {
@@ -1318,8 +1357,12 @@ function getAreaDistrictOptions(filter) {
 
 function getAreaRegionOptions(filter) {
   const activeValue = areaDistrictActive.value[filter.key];
-  const activeDistrict = getAreaDistrictOptions(filter).find(item => item.value === activeValue);
-  return activeDistrict?.children ?? [];
+  const districtOptions = getAreaDistrictOptions(filter);
+  const activeDistrict = districtOptions.find(item => item.value === activeValue);
+  if (activeDistrict) {
+    return activeDistrict.children;
+  }
+  return getUniqueOptions(districtOptions.flatMap(item => item.children));
 }
 
 function getAreaValue(key) {
@@ -1371,12 +1414,51 @@ function setAreaValue(filter, key, value) {
 }
 
 function toggleAreaAll(filter, key, options, checked) {
-  const optionValues = options.map(item => item.value);
-  const optionValueSet = new Set(optionValues);
-  const values = checked
-    ? mergeValues(getAreaValue(key), optionValues)
-    : getAreaValue(key).filter(item => !optionValueSet.has(item));
-  setAreaValue(filter, key, values);
+  getAreaAllGroups(filter, key, options).forEach((group) => {
+    const optionValues = group.options.map(item => item.value);
+    const optionValueSet = new Set(optionValues);
+    if (checked) {
+      areaValueMap.value[group.key] = mergeValues(getAreaValue(group.key), optionValues);
+      return;
+    }
+    areaValueMap.value[group.key] = getAreaValue(group.key)
+      .filter(item => !optionValueSet.has(item));
+  });
+}
+
+function getAreaAllGroups(filter, key, options) {
+  const groups = [{ key, options }];
+  if (key === filter.areaValueKey) {
+    const districtOptions = getUniqueOptions(options.flatMap(item => item.children));
+    const regionOptions = getUniqueOptions(districtOptions.flatMap(item => item.children));
+    groups.push({ key: filter.districtValueKey, options: districtOptions });
+    groups.push({ key: filter.regionValueKey, options: regionOptions });
+  }
+  if (key === filter.districtValueKey) {
+    const regionOptions = getUniqueOptions(options.flatMap(item => item.children));
+    groups.push({ key: filter.regionValueKey, options: regionOptions });
+  }
+  return groups;
+}
+
+function isAreaAllSelected(filter, key, options) {
+  const groups = getAreaAllGroups(filter, key, options);
+  const hasOptions = groups.some(group => group.options.length > 0);
+  return hasOptions && groups.every((group) => {
+    if (!group.options.length) {
+      return true;
+    }
+    return isAllSelected(getAreaValue(group.key), group.options);
+  });
+}
+
+function isAreaAllIndeterminate(filter, key, options) {
+  const groups = getAreaAllGroups(filter, key, options);
+  const optionCount = groups.reduce((count, group) => count + group.options.length, 0);
+  const selectedCount = groups.reduce((count, group) => {
+    return count + group.options.filter(item => getAreaValue(group.key).includes(item.value)).length;
+  }, 0);
+  return selectedCount > 0 && selectedCount < optionCount;
 }
 
 function syncAreaSelection(filter, previousValue) {
@@ -1432,6 +1514,7 @@ function setAreaVisible(filter, visible) {
 
 function setAreaActive(filter, value) {
   areaActive.value[filter.key] = value;
+  areaDistrictActive.value[filter.key] = '';
 }
 
 function setAreaDistrictActive(filter, value) {
@@ -2204,6 +2287,21 @@ function confirmResource() {
   &:hover,
   &.active {
     background: #f7f9ff;
+  }
+}
+
+.area-option-row,
+.custom-cascade-option-row {
+  justify-content: flex-start;
+  gap: 10px;
+
+  > :deep(.el-checkbox) {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .el-icon {
+    margin-left: auto;
   }
 }
 
