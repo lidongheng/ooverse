@@ -2290,21 +2290,6 @@ function confirmResource() {
   }
 }
 
-.area-option-row,
-.custom-cascade-option-row {
-  justify-content: flex-start;
-  gap: 10px;
-
-  > :deep(.el-checkbox) {
-    flex: 0 0 auto;
-    width: auto;
-  }
-
-  .el-icon {
-    margin-left: auto;
-  }
-}
-
 .panel-actions {
   display: flex;
   justify-content: flex-end;
@@ -2356,6 +2341,30 @@ function confirmResource() {
 .resource-row :deep(.el-checkbox) {
   width: auto;
   flex: 1;
+}
+
+.resource-row.area-option-row,
+.resource-row.custom-cascade-option-row {
+  justify-content: flex-start;
+  gap: 10px;
+
+  > :deep(.el-checkbox) {
+    flex: 0 0 auto;
+    width: auto;
+
+    .el-checkbox__label {
+      display: none;
+    }
+  }
+
+  > span {
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .el-icon {
+    margin-left: auto;
+  }
 }
 
 .resource-row.checked-row {
