@@ -33,9 +33,11 @@
           :align="item.align"
         >
           <template v-for="child in item.children">
+            <!-- columnKey 用于让业务组件按字段名调用 clearFilter，仅配置级联筛选时需要传。 -->
             <el-table-column
               :show-overflow-tooltip="child.showTooltip"
               :prop="child.prop"
+              :column-key="child.columnKey"
               :label="child.label"
               :minWidth="changeValueByScale(child.width)"
               :sortable="child.sortable"
@@ -65,10 +67,12 @@
           :align="item.align"
           :width="changeValueByScale(item.width)"
         ></el-table-column>
+        <!-- columnKey 会透传给 Element Plus，不能只依赖 prop，否则 clearFilter(['az']) 无法准确找到列。 -->
         <el-table-column
           v-else
           :show-overflow-tooltip="item.showTooltip"
           :prop="item.prop"
+          :column-key="item.columnKey"
           :label="item.label"
           :width="changeValueByScale(item.width)"
           :minWidth="changeValueByScale(item.minWidth)"
@@ -170,11 +174,14 @@ pages.pageNo * pages.pageSize);
 const sort = (...args) => table.value?.sort(...args);
 const toggleRowExpansion = (...args) => table.value?.toggleRowExpansion(...args);
 const clearSort = () => table.value?.clearSort();
+// 级联筛选由业务组件决定清除哪一列，TableList 只透传 Element Plus 的 clearFilter 方法。
+const clearFilter = (...args) => table.value.clearFilter(...args);
 
 defineExpose ({
     sort,
 toggleRowExpansion,
 clearSort,
+clearFilter,
 });
 </script>
 
