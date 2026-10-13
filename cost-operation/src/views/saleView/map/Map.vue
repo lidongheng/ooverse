@@ -369,6 +369,9 @@ function buildMarkersGraphic(s, rangeMin, rangeMax) {
         updateMap();
       },
       onclick() {
+        if (!hasAreaPermission) {
+          return;
+        }
         jumpToEcsDetailByArea(regionName);
       },
       children: [

@@ -34,7 +34,7 @@
             </template>
           </OBSInformation>
           <div class="scroll-box">
-            <OBSTopRegionTrend></OBSTopRegionTrend>
+            <RegionTopTrend resource-type="obs"></RegionTopTrend>
             <OBSTable :active="active"></OBSTable>
           </div>
         </template>
@@ -43,7 +43,10 @@
             :filter-config="filterConfig"
             :filter-options="filterOptions"
           />
-          <OBSTable :active="active"></OBSTable>
+          <div class="scroll-box">
+            <RegionTopTrend resource-type="xpu"></RegionTopTrend>
+            <OBSTable :active="active"></OBSTable>
+          </div>
         </template>
         <template v-if="active === 'network'"></template>
       </div>
@@ -76,7 +79,7 @@ import {
 } from './useResourceData';
 import { useSaleDetailStore, useSaleFilterStore } from '../saleHome/useSaleFilter.js';
 import FilterDropdowns from '@/components/FilterDropdowns.vue';
-import OBSTopRegionTrend from './OBSTopRegionTrend.vue';
+import RegionTopTrend from './RegionTopTrend.vue';
 
 const route = useRoute();
 const active = ref(route.query.type || 'ECS');

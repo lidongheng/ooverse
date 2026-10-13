@@ -34,11 +34,14 @@
         />
       </div>
 
+      <!-- ref 用来调用 clearFilter，filter-change 则交给 composable 处理大区和 AZ 的联动。 -->
       <TableList
+        ref="ecsTableRef"
         class="detail-table"
         :table-column="ecsTableColumns"
         :table-data="ecsTableRows"
         :table-config="ecsTableConfig"
+        :filter-change-func="handleFilterChange"
       >
         <template #stock="{ scope }">
           <span class="stock-value">{{ scope.row.stock }}</span>
@@ -62,91 +65,18 @@
 <script setup>
 import CommonChart from '@/components/CommonChart.vue';
 import TableList from '@/components/TableList.vue';
-import { ecsTableRows, resourceTree, trendValues } from './staticData';
+import { useEcsTable } from './useEcsTable';
 
-const lineChartStyle = {
-  width: 900,
-  height: 248,
-};
-
-const ecsTableConfig = {
-  height: 210,
-};
-
-// ECS 资源详情统一交给 TableList 渲染，列配置保留原 el-table 的字段和宽度。
-const ecsTableColumns = [
-  { prop: 'index', label: '序号', width: 70 },
-  { prop: 'area', label: '大区', minWidth: 110 },
-  { prop: 'region', label: 'Region', minWidth: 150 },
-  { prop: 'az', label: 'AZ', minWidth: 160 },
-  { prop: 'family', label: '资源族', minWidth: 110 },
-  { prop: 'generation', label: '资源代次', minWidth: 110 },
-  { prop: 'type', label: '资源类型', minWidth: 110 },
-  // stock 和 operation 使用插槽，是为了保留绿色数值和“查看趋势”按钮样式。
-  { prop: 'stock', label: '可售量(核)', minWidth: 120, showSlot: true },
-  { prop: 'operation', label: '操作', minWidth: 100, showSlot: true },
-];
-
-const lineOption = {
-  grid: {
-    left: 46,
-    right: 22,
-    top: 20,
-    bottom: 34,
-  },
-  xAxis: {
-    type: 'category',
-    data: trendValues.map((item, index) => index + 1),
-    boundaryGap: false,
-    axisLabel: {
-      color: '#8a8bab',
-      fontSize: 11,
-    },
-    axisTick: {
-      show: false,
-    },
-    axisLine: {
-      lineStyle: {
-        color: '#e9ecf5',
-      },
-    },
-  },
-  yAxis: {
-    type: 'value',
-    name: '核',
-    axisLabel: {
-      color: '#8a8bab',
-    },
-    splitLine: {
-      lineStyle: {
-        color: '#edf0f8',
-      },
-    },
-  },
-  series: [
-    {
-      type: 'line',
-      data: trendValues,
-      symbol: 'circle',
-      symbolSize: 5,
-      lineStyle: {
-        color: '#75a9dd',
-        width: 2,
-      },
-      itemStyle: {
-        color: '#fff',
-        borderColor: '#75a9dd',
-        borderWidth: 2,
-      },
-      label: {
-        show: true,
-        position: 'top',
-        color: '#34356f',
-        fontSize: 11,
-      },
-    },
-  ],
-};
+const {
+  ecsTableRef,
+  ecsTableRows,
+  ecsTableColumns,
+  ecsTableConfig,
+  handleFilterChange,
+  resourceTree,
+  lineChartStyle,
+  lineOption,
+} = useEcsTable();
 </script>
 
 <style scoped lang="less">
