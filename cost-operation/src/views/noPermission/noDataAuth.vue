@@ -859,11 +859,14 @@ const {
 }
 
 .region-selection-bar__summary {
+  flex: none;
   color: #5b6178;
   white-space: nowrap;
 }
 
 .region-selection-bar__names {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: #939aab;
   text-overflow: ellipsis;
@@ -873,6 +876,7 @@ const {
 .region-select-all {
   display: inline-flex;
   align-items: center;
+  flex: none;
   gap: 10px;
   height: 28px;
   padding: 0;
@@ -880,6 +884,7 @@ const {
   color: #4a506e;
   background: transparent;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1174,6 +1179,12 @@ const {
 
   .no-rem .region-selection-bar {
     gap: 8px;
+    height: 32px;
+  }
+
+  .no-rem .region-select-all {
+    gap: 8px;
+    height: 28px;
   }
 
   .no-rem .region-selection-bar__names {
